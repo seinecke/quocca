@@ -19,9 +19,37 @@ from skimage.filters import gaussian
 
 
 class Image:
+	"""Class containing image and auxilliary information.
+
+	Attributes
+	----------
+	image : numpy.array, shape=(width, height)
+		Image, normalized to [0,1].
+	time : astropy.time.Time object
+		Timestamp.
+	camera : quocca.camera.Camera
+		Camera the image is associated with.
+	star_pos, star_mag : numpy.array
+		Position in pixels and magnitude of the stars potentially visible.
+	
+	Notes
+	-----
+	Currently only `mat`, `fits.gz` and `fits` files are supported.
+	"""
     __supported_formats__ = ['mat', 'gz', 'fits']
 
     def __init__(self, path, camera, catalog):
+        """Constructor of Image.
+        
+        Parameters
+        ----------
+        path : str
+            Path to image file.
+        camera : quocca.camera.Camera object
+            Camera associated with the image.
+        catalog : quocca.catalog.Catalog object
+            Star catalog.
+        """
         suffix = path.split(".")[-1]
         if suffix not in self.__supported_formats__:
             raise NotImplementedError("Unsupported Filetype {}".format(suffix))
@@ -59,6 +87,17 @@ class Image:
         self.star_mag = np.array(self.star_mag[self.mask])
 
     def show(self, upper=90.0, show_stars=5.0):
+        """Shows the image.
+        
+        Parameters
+        ----------
+        upper : float, default=90.0
+            Quantile at which to clip the image at the upper end. Increase
+            when displayed image appears to be overexposed and vice-versa.
+        show_stars : float, default=5.0
+            Magnitude limit of stars. Set to some super low value to show no
+            stars at all.
+        """
         fig, ax = plt.subplots(1, figsize=(10, 10))
         ax.imshow(self.image, vmin=0.0, vmax=np.percentile(self.image, upper),
         	      cmap='gray')
