@@ -1,0 +1,22 @@
+cta:
+  location:
+    lat: 28.7618172
+    lon: -17.8913442
+    height: 2200.0
+  mapping: nonlin
+  resolution:
+    x: 1699
+    y: 1699
+  size:
+    x: 1000
+    y: 1000
+  zenith:
+    x: 849.3173
+    y: 849.1180
+  radius: 849.5514
+  az_offset: 87.2737
+  timestamps:
+    - UTC1
+    - TIMEUTC
+  max_val: 65536
+  mask: resources/cta_mask.png

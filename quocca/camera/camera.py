@@ -1,0 +1,68 @@
+'''
+quocca: All Sky Camera Analysis Tools
+
+Cameras.
+
+2018
+'''
+
+import numpy as np
+
+from ruamel import yaml
+from pkg_resources import resource_filename
+from imageio import imread
+from scipy.interpolate import RegularGridInterpolator
+
+from astropy import units as u
+from astropy.coordinates import Angle, EarthLocation
+
+
+class Camera:
+    with open(resource_filename('quocca', 'resources/cameras.yaml')) as file:
+        __config__ = yaml.safe_load(file)
+        __supported_cameras__ = list(__config__.keys())
+    
+    def __init__(self, name):
+        if name not in self.__supported_cameras__:
+            raise NotImplementedError('Unsupported Camera {}'.format(name))
+        else:
+            self.name = name
+            self.__dict__.update(**self.__config__[name])
+            self.location = EarthLocation(**self.location)
+            self.az_offset = Angle(self.az_offset * u.deg)
+            mask_path = resource_filename('quocca', self.mask)
+            mask = np.array(imread(mask_path)) != 0
+            tx = np.arange(mask.shape[0])
+            ty = np.arange(mask.shape[1])
+            self.mask = RegularGridInterpolator((tx, ty), mask,
+                                                bounds_error=False,
+                                                method='nearest')
+    
+    def __str__(self):
+        return 'Camera {}'.format(self.name)
+    
+    def theta2r(self, theta):
+        if self.mapping == 'lin':
+            return self.radius / (np.pi * u.rad / 2.0) * theta.to(u.rad)
+        elif self.mapping == 'nonlin':
+            return np.sqrt(2.0) * self.radius * np.sin(theta.to(u.rad) / 2.0)
+        else:
+            raise NotImplementedError('Unsupported Mapping {}'
+            	                      .format(self.mapping))
+        
+    def r2theta(self, r):
+        if self.mapping == 'lin':
+            return r * (np.pi * u.rad) / (2.0 * self.radius)
+        elif self.mapping == 'nonlin':
+            return 2.0 * np.arcsin(np.sqrt(2.0) * r / self.radius)
+        
+    def check_mask(self, x, y):
+        return self.mask((x, y))
+        
+    def project_stars(self, catalog, time):
+        altaz = catalog.get_horizontal(self, time)
+        phi, theta = altaz.az, altaz.alt
+        r = self.theta2r(Angle('90d') - theta)
+        row = -r * np.sin(phi + self.az_offset) + self.zenith['x']
+        col = r * np.cos(phi + self.az_offset) + self.zenith['y']
+        return np.column_stack((row, col)), catalog['v_mag']

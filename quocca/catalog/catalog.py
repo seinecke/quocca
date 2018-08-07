@@ -1,0 +1,34 @@
+'''
+quocca: All Sky Camera Analysis Tools
+
+Catalogs.
+
+2018
+'''
+
+import numpy as np
+from ruamel import yaml
+from pkg_resources import resource_filename
+
+from astropy.table import Table
+from astropy.constants import atm
+from astropy.coordinates import SkyCoord, AltAz
+
+
+class Catalog(Table):
+    with open(resource_filename('quocca', 'resources/catalogs.yaml')) as file:
+        __config__ = yaml.safe_load(file)
+        __supported_catalogs__ = list(__config__.keys())
+        
+    def __init__(self, name):
+        if name not in self.__supported_catalogs__:
+            raise NotImplementedError('Unsupported Catalog {}'.format(name))
+        super(Catalog, self).__init__(Table.read(self.__config__[name]['file']))
+        self.remove_rows(np.isnan(self['ra']) | np.isnan(self['dec']))
+    
+    def get_horizontal(self, camera, time):
+        pos = SkyCoord(ra=self['ra'], dec=self['dec'], frame='icrs', unit='deg')
+        pos_altaz = pos.transform_to(AltAz(obstime=time,
+                                           location=camera.location,
+                                           pressure=atm))
+        return pos_altaz
