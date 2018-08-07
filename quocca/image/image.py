@@ -19,23 +19,23 @@ from skimage.filters import gaussian
 
 
 class Image:
-	"""Class containing image and auxilliary information.
+    """Class containing image and auxilliary information.
 
-	Attributes
-	----------
-	image : numpy.array, shape=(width, height)
-		Image, normalized to [0,1].
-	time : astropy.time.Time object
-		Timestamp.
-	camera : quocca.camera.Camera
-		Camera the image is associated with.
-	star_pos, star_mag : numpy.array
-		Position in pixels and magnitude of the stars potentially visible.
-	
-	Notes
-	-----
-	Currently only `mat`, `fits.gz` and `fits` files are supported.
-	"""
+    Attributes
+    ----------
+    image : numpy.array, shape=(width, height)
+        Image, normalized to [0,1].
+    time : astropy.time.Time object
+        Timestamp.
+    camera : quocca.camera.Camera
+        Camera the image is associated with.
+    star_pos, star_mag : numpy.array
+        Position in pixels and magnitude of the stars potentially visible.
+    
+    Notes
+    -----
+    Currently only `mat`, `fits.gz` and `fits` files are supported.
+    """
     __supported_formats__ = ['mat', 'gz', 'fits']
 
     def __init__(self, path, camera, catalog):
@@ -81,7 +81,7 @@ class Image:
         self.time = time
         self.camera = camera
         self.star_pos, self.star_mag = self.camera.project_stars(catalog,
-        	                                                     self.time)
+                                                                 self.time)
         self.mask = camera.check_mask(*self.star_pos.T) == 1
         self.star_pos = np.array(self.star_pos[self.mask, :])
         self.star_mag = np.array(self.star_mag[self.mask])
@@ -100,10 +100,10 @@ class Image:
         """
         fig, ax = plt.subplots(1, figsize=(10, 10))
         ax.imshow(self.image, vmin=0.0, vmax=np.percentile(self.image, upper),
-        	      cmap='gray')
+                  cmap='gray')
         display = self.star_mag < show_stars
         ax.scatter(self.star_pos[display, 1], self.star_pos[display, 0], s=100,
-        	       marker='o', facecolor='', edgecolor='w')
+                   marker='o', facecolor='', edgecolor='w')
         angles = [15, 30, 45, 60, 75, 90]
         circles = [Circle((self.camera.zenith['x'],
                           self.camera.zenith['y']),

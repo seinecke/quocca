@@ -28,20 +28,20 @@ class Catalog(Table):
         self.remove_rows(np.isnan(self['ra']) | np.isnan(self['dec']))
     
     def get_horizontal(self, camera, time):
-    	"""Transforms ra/dec coordinates from catalog into alt-az coordinates.
+        """Transforms ra/dec coordinates from catalog into alt-az coordinates.
 
-    	Parameters
-    	----------
-    	camera : quocca.camera.Camera object
-    		Camera for which to transform coordinates for.
-    	time : astropy.time.Time object
-    		Timestamp.
+        Parameters
+        ----------
+        camera : quocca.camera.Camera object
+            Camera for which to transform coordinates for.
+        time : astropy.time.Time object
+            Timestamp.
 
-    	Returns:
-    	--------
-    	pos_altaz : astropy.coordinates.sky_coordinate.SkyCoord object
-    		Positions in altitude and azimuth.
-    	"""
+        Returns:
+        --------
+        pos_altaz : astropy.coordinates.sky_coordinate.SkyCoord object
+            Positions in altitude and azimuth.
+        """
         pos = SkyCoord(ra=self['ra'], dec=self['dec'], frame='icrs', unit='deg')
         pos_altaz = pos.transform_to(AltAz(obstime=time,
                                            location=camera.location,

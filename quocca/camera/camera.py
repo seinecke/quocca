@@ -23,19 +23,19 @@ class Camera:
     Attributes
     ----------
     az_offset : astropy.coordinates.Angle object
-    	Offset angle against north in degrees.
+        Offset angle against north in degrees.
     location : astropy.coordinates.EarthLocation object
-    	Location of the camera.
+        Location of the camera.
     mask : scipy.interpolate.RegularGridInterpolator
-    	Camera-specific mask of permanently obstured objects in field of view.
+        Camera-specific mask of permanently obstured objects in field of view.
     name : str
-    	Name of the camera.
+        Name of the camera.
     
-	Notes
-	-----
-	Supported cameras are gathered from a config file located in
-	`resources/cameras.yaml`. Adding, removing or altering the parameters
-	of cameras requires editing that config manually.
+    Notes
+    -----
+    Supported cameras are gathered from a config file located in
+    `resources/cameras.yaml`. Adding, removing or altering the parameters
+    of cameras requires editing that config manually.
     """
 
     with open(resource_filename('quocca', 'resources/cameras.yaml')) as file:
@@ -89,12 +89,12 @@ class Camera:
             return np.sqrt(2.0) * self.radius * np.sin(theta.to(u.rad) / 2.0)
         else:
             raise NotImplementedError('Unsupported Mapping {}'
-            	                      .format(self.mapping))
+                                      .format(self.mapping))
         
     def r2theta(self, r):
-    	"""Converts a radius in pixels `r` into an altitude. Used function
-    	depends on attribute :attribute:`mapping`. Currently, only `lin` and
-    	`nonlin` are supported.
+        """Converts a radius in pixels `r` into an altitude. Used function
+        depends on attribute :attribute:`mapping`. Currently, only `lin` and
+        `nonlin` are supported.
         
         Parameters
         ----------
@@ -145,7 +145,7 @@ class Camera:
         pixel_coordinates : numpy.array, shape=(n_stars, 2)
             Calculated pixel coordinates for each star.
         magnitude : numpy.array
-        	Magnitude of each star.
+            Magnitude of each star.
         """
         altaz = catalog.get_horizontal(self, time)
         phi, theta = altaz.az, altaz.alt
