@@ -24,7 +24,7 @@ class Catalog(Table):
 
         if name not in self.__supported_catalogs__:
             raise NotImplementedError('Unsupported Catalog {}'.format(name))
-        super(Catalog, self).__init__(Table.read(self.__config__[name]['file']))
+        super(Catalog, self).__init__(Table.read(resource_filename('quocca', self.__config__[name]['file'])))
         self.remove_rows(np.isnan(self['ra']) | np.isnan(self['dec']))
     
     def get_horizontal(self, camera, time):

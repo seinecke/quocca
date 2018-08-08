@@ -1,2 +1,2 @@
 hipparcos:
-  file: hipparcos.fits.gz
+  file: resources/hipparcos.fits.gz
