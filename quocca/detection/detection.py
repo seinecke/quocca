@@ -80,7 +80,10 @@ class LLHStarDetection:
         mask_nearby = nearby_stars(image.star_pos[:,0],
                                    image.star_pos[:,1],
                                    image.star_mag, min_dist)
-        mask_mag = image.star_mag < max_mag
+        if max_mag is None:
+            mask_mag = np.ones(len(mask_nearby), dtype=bool)
+        else:
+            mask_mag = image.star_mag < max_mag
         mask = mask_mag & mask_nearby 
         n_stars = len(image.star_pos[mask])
         pos = image.star_pos[mask]
