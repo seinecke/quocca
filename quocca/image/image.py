@@ -119,4 +119,4 @@ class Image:
         for c in circles:
             ax.add_patch(c)
             plt.axis('off')
-        plt.show()
+        return fig, ax
