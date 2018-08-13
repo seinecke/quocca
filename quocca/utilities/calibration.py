@@ -12,6 +12,8 @@ from ..image import Image
 from astropy.coordinates import Angle
 import astropy.units as u
 from skimage.filters import gaussian
+from ruamel import yaml
+from pkg_resources import resource_filename
 
 
 def project_stars(altaz, radius, zx, zy, ao):
@@ -22,6 +24,70 @@ def project_stars(altaz, radius, zx, zy, ao):
     row = -r * np.sin(phi + ao) + zx
     col = r * np.cos(phi + ao) + zy
     return row, col
+
+
+def add_camera(name,
+               location,
+               mapping,
+               resolution,
+               size,
+               zenith,
+               radius,
+               az_offset,
+               timestamps,
+               max_val,
+               force=False,
+               **kwargs):
+    """Adds a new camera to the ensemble.
+
+    Parameters
+    ----------
+    name : str
+        Name of the camera. If name already exists, abort, unless force is
+        True, then camera will be overwritten.
+    location : dict
+        Dict with keys lat, lon, height containing the location on earth.
+    mapping : str
+        Identifier for the mapping function, see documentation of the camera
+        module for details.
+    resolution : dict
+        Dict with keys x, y containing the resolution of the camera in pixels.
+    size : dict
+        Dict with keys x, y, containing the physical size of the sensor in mm.
+    radius : float
+        Radius in pixels
+    az_offset : float
+        Azimuth offset in degress
+    timestamps : list
+        List of timestamps in header
+    max_val : int
+        Maximum value in image data (usually 2 ** n)
+    force : bool
+        Whether or not to force overwriting
+    kwargs : keywords
+        Additional parameters
+    """
+    with open(resource_filename('quocca', 'resources/cameras.yaml')) as file:
+        __config__ = yaml.safe_load(file)
+        __supported_catalogs__ = list(__config__.keys())
+    if name in __supported_catalogs__ and not force:
+        raise NameError('Camera {} already exists. Use keyword force to overwrite.'
+                        .format(name))
+    d = {name: {
+        'location': location,
+        'mapping': mapping,
+        'resolution': resolution,
+        'size': size,
+        'zenith': zenith,
+        'radius': radius,
+        'az_offset': az_offset,
+        'timestamps': timestamps,
+        'max_val': max_val,
+        **kwargs
+    }}
+    __config__.update(d)
+    res_fn = resource_filename('quocca', 'resources/cameras.yaml')
+    yaml.safe_dump(__config__, open(res_fn, 'w'), default_flow_style=False)
 
 
 def fit_camera_params(img_path,

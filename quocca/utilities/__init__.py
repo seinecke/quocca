@@ -1,3 +1,3 @@
-from .calibration import calibrate_camera
+from .calibration import fit_camera_params, add_camera
 
-__all__ = ['calibrate_camera']
+__all__ = ['fit_camera_params', 'add_camera']
