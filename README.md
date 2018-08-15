@@ -23,3 +23,28 @@ img = Image('test.mat', cam, cat)
 det = FilterStarDetection(1.7, 8)
 result = det.detect(img, max_mag=20.0, min_dist=16)
 ``` 
+### Calibrating Camera Parameters
+
+Calibrating a camera is necessary for multiple reasons, namely
+* The intrinsic parameters of the camera are usually only known inaccurately. Calibrating the camera using a clear sky image can help out.
+* The methods used for star detection have no concept of the absolute brightness of the recorded image.
+
+Methods for calibration are found in `quocca.utilities`.
+
+```python
+from quocca.utilities import calibrate_method
+
+cam = Camera('cta')
+fit_camera_params('/Users/thoinka/clear_2015_12_29-21_17_04.mat', cam, update=True)
+```
+This fits camera parameters to a clear sky image and updates the configs automatically.
+
+```python
+from quocca.utilities import calibrate_method
+
+
+cam = Camera('cta')
+det = LLHStarDetection(cam, 1.7, 8)
+calibrate_method('clear_image.mat', cam, det, update=True)
+```
+This calibrates the estimated cloudiness of the method `LLHStarDetection`. The configs are updated automatically.
