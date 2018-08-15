@@ -26,6 +26,18 @@ def project_stars(altaz, radius, zx, zy, ao):
     return row, col
 
 
+def update_camera(name, **kwargs):
+    with open(resource_filename('quocca', 'resources/cameras.yaml')) as file:
+        __config__ = yaml.safe_load(file)
+        __supported_catalogs__ = list(__config__.keys())
+    if name not in __supported_catalogs__:
+        raise NameError('Camera {} does not exist.'
+                        .format(name))
+    __config__[name].update(kwargs)
+    res_fn = resource_filename('quocca', 'resources/cameras.yaml')
+    yaml.safe_dump(__config__, open(res_fn, 'w'), default_flow_style=False)
+
+
 def add_camera(name,
                location,
                mapping,
@@ -91,10 +103,12 @@ def add_camera(name,
 
 
 def fit_camera_params(img_path,
+                      cam,
                       max_mag=3.0,
                       x0=None,
                       init_sigma=10.0,
                       stepsize=1.2,
+                      update=False,
                       verbose=True):
     """Procedure to fit camera parameters using a clear sky image.
 
@@ -102,6 +116,8 @@ def fit_camera_params(img_path,
     ----------
     img_path : str
         Path to a clear sky image.
+    cam: quocca.camera.Camera object
+        Camera.
     max_mag : float
         Maximum magnitude to be considered during the fit.
     x0 : numpy.array, shape=(4,)
@@ -126,8 +142,6 @@ def fit_camera_params(img_path,
 
     if verbose: print('Reading in catalog ...')
     cat = Catalog('hipparcos')
-    if verbose: print('Reading in camera ...')
-    cam = Camera('cta')
     if verbose: print('Reading in image ...')
     img = Image(img_path, cam, cat)
     if verbose: print('Transforming coordinates ...')
@@ -164,7 +178,29 @@ def fit_camera_params(img_path,
         i += 1
     if verbose: print("Final result:\n  zenith: ({}, {})\n  radius: {}\n  azimuth offset: {}"
                       .format(*x0))
+    if update:
+        update_camera(cam.name, **{'zenith': {'x': x0[0],
+                                              'y': x0[1]}, 
+                                   'radius': x0[2],
+                                   'az_offset': x0[3]})
     return {'zenith': {'x': x0[0],
                        'y': x0[1]}, 
             'radius': x0[2],
             'az_offset': x0[3]}
+
+
+def calibrate_method(img_path, cam, method, verbose=False, update=True,
+                     **kwargs):
+    """Calibrates a method for a camera, i.e. fits the response of the camera
+    to a certain star detection method using a very clear night sky image.
+    """
+    if verbose: print('Reading in catalog ...')
+    cat = Catalog('hipparcos')
+    if verbose: print('Reading in image ...')
+    img = Image(img_path, cam, cat)
+    if verbose: print('Detecting stars ...')
+    result = method.detect(img, **kwargs)
+    calibration = 1.0 / np.median(result['M_fit'] / np.exp(-result['v_mag'])) 
+    if update:
+        update_camera(cam.name, **{method.name: float(calibration)})
+    return {method.name: calibration}

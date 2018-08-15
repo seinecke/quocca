@@ -43,7 +43,7 @@ def show_img(img, ax=None, show_stars=False, max_mag=3.0, upper=99.8):
     if show_stars:
         display = img.star_mag < max_mag
         ax.scatter(img.star_pos[display, 1], img.star_pos[display, 0], s=50,
-               marker='o', facecolor='', edgecolor='w')
+               marker='o', facecolor='', edgecolor='#7ac143')
     
     angles = [15, 30, 45, 60, 75, 90]
     circles = [Circle((img.camera.zenith['x'],

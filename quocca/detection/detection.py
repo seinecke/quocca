@@ -10,6 +10,13 @@ from scipy.spatial import cKDTree
 from scipy.optimize import minimize
 from scipy.ndimage import convolve
 from skimage.filters import gaussian
+from ruamel import yaml
+from pkg_resources import resource_filename
+import warnings
+
+
+class CalibrationWarning(Warning):
+    pass
 
 
 def nearby_stars(x, y, mag, radius):
@@ -45,14 +52,23 @@ def laplacian_gaussian_filter(img, sigma, prec=1e-16):
 
 class LLHStarDetection:
     name = 'llh_star_detection'
-    def __init__(self, sigma=1.9, fit_size=5, fit_pos=True, fit_sigma=False,
-                 presmoothing=1.5):
+
+    def __init__(self, camera, sigma=1.9, fit_size=5, fit_pos=True,
+                 fit_sigma=False, presmoothing=1.5):
         self.sigma = sigma
         self.size = (fit_size, fit_size)
         self.fit_pos = fit_pos
         self.fit_sigma = fit_sigma
         self.presmoothing = presmoothing
-    
+        self.camera = camera
+        with open(resource_filename('quocca', 'resources/cameras.yaml')) as file:
+            config = yaml.safe_load(file)
+            try:
+                self.calibration = config[self.camera.name][self.name]
+            except KeyError:
+                warnings.warn('No calibration setting found.')
+                self.calibration = None
+
     def get_slice(self, pos, shape):
         pos = list(np.round(pos).astype(int))
         a_min = np.clip(pos[1] - self.size[1], 0, shape[1] - 1)
@@ -72,6 +88,10 @@ class LLHStarDetection:
         return np.clip(np.abs(mag) * np.exp(arg) + np.abs(bkg), 0.0, 1.0)
     
     def detect(self, image, max_mag=5.5, min_dist=6.0):
+        if self.calibration is None:
+            warnings.warn('Method {} for camera {} is not calibrated yet.'
+                          .format(self.name, self.camera.name))
+            self.calibration = 1.0
         img = gaussian(image.image, self.presmoothing)
         tx = np.arange(img.shape[0])
         ty = np.arange(img.shape[1])
@@ -88,7 +108,8 @@ class LLHStarDetection:
         pos = image.star_pos[mask]
         results = {
             key: np.zeros(n_stars)
-            for key in ['M_fit', 'b_fit', 'x_fit', 'y_fit', 'v_mag', 'x', 'y']
+            for key in ['M_fit', 'b_fit', 'x_fit', 'y_fit', 'v_mag', 'x', 'y',
+                        'cloudiness']
         }
         for idx in tqdm(range(n_stars)):
             sel = self.get_slice((pos[idx,1],
@@ -104,6 +125,9 @@ class LLHStarDetection:
                              pos[idx,1], pos[idx,0]],
                          method='powell')
             results['M_fit'][idx] = np.abs(r.x[0])
+            cloudiness = np.abs(r.x[0]) / np.exp(-image.star_mag[mask][idx])
+            results['cloudiness'][idx] = np.clip(cloudiness * self.calibration,
+                                                 0.0, 1.0)
             results['b_fit'][idx] = np.abs(r.x[1])
             results['x_fit'][idx] = r.x[2]
             results['y_fit'][idx] = r.x[3]
@@ -115,10 +139,18 @@ class LLHStarDetection:
 
 class FilterStarDetection:
     name = 'filter_star_detection'
-    def __init__(self, sigma, fit_size, quantile=100.0):
+    def __init__(self, camera, sigma, fit_size, quantile=100.0):
         self.sigma = sigma
         self.size = (fit_size, fit_size)
         self.quantile = quantile
+        self.camera = camera
+        with open(resource_filename('quocca', 'resources/cameras.yaml')) as file:
+            config = yaml.safe_load(file)
+            try:
+                self.calibration = config[self.camera.name][self.name]
+            except KeyError:
+                warnings.warn('No calibration setting found.')
+                self.calibration = None
     
     def get_slice(self, pos, shape):
         pos = list(np.round(pos).astype(int))
@@ -130,6 +162,10 @@ class FilterStarDetection:
                 slice(b_min, b_max, None))
 
     def detect(self, image, max_mag=5.5, min_dist=6.0):
+        if self.calibration is None:
+            warnings.warn('Method {} for camera {} is not calibrated yet.'
+                          .format(self.name, self.camera.name))
+            self.calibration = 1.0
         img = laplacian_gaussian_filter(image.image, self.sigma)
         tx = np.arange(img.shape[0])
         ty = np.arange(img.shape[1])
@@ -143,7 +179,7 @@ class FilterStarDetection:
         pos = image.star_pos[mask]
         results = {
             key: np.zeros(n_stars)
-            for key in ['M_fit', 'v_mag', 'x', 'y']
+            for key in ['M_fit', 'v_mag', 'x', 'y', 'cloudiness']
         }
         for idx in tqdm(range(n_stars)):
             sel = self.get_slice((pos[idx,1],
@@ -153,6 +189,9 @@ class FilterStarDetection:
             M = np.percentile(img[sel], self.quantile)
 
             results['M_fit'][idx] = M
+            cloudiness = M / np.exp(-image.star_mag[mask][idx])
+            results['cloudiness'][idx] = np.clip(cloudiness * self.calibration,
+                                                 0.0, 1.0)
             results['v_mag'][idx] = image.star_mag[mask][idx]
             results['x'][idx] = image.star_pos[mask, 0][idx]
             results['y'][idx] = image.star_pos[mask, 1][idx]

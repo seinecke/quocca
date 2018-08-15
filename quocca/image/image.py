@@ -14,6 +14,7 @@ from matplotlib.patches import Circle
 from matplotlib.collections import PatchCollection
 from matplotlib.colors import LogNorm
 from skimage.filters import gaussian
+from ..plotting import show_img
 
 
 class Image:
@@ -84,37 +85,8 @@ class Image:
         self.star_pos = np.array(self.star_pos[self.mask, :])
         self.star_mag = np.array(self.star_mag[self.mask])
 
-    def show(self, upper=90.0, show_stars=5.0):
-        """Shows the image.
-        
-        Parameters
-        ----------
-        upper : float, default=90.0
-            Quantile at which to clip the image at the upper end. Increase
-            when displayed image appears to be overexposed and vice-versa.
-        show_stars : float, default=5.0
-            Magnitude limit of stars. Set to some super low value to show no
-            stars at all.
+    def show(self, **kwargs):
+        """Convenience wrapper for quocca.plotting.show_img.
         """
-        fig, ax = plt.subplots(1, figsize=(10, 10))
-        ax.imshow(self.image, vmin=0.0, vmax=np.percentile(self.image, upper),
-                  cmap='gray')
-        display = self.star_mag < show_stars
-        ax.scatter(self.star_pos[display, 1], self.star_pos[display, 0], s=100,
-                   marker='o', facecolor='', edgecolor='w')
-        angles = [15, 30, 45, 60, 75, 90]
-        circles = [Circle((self.camera.zenith['x'],
-                          self.camera.zenith['y']),
-                         self.camera.theta2r(angle * u.deg),
-                         facecolor='none', ec='w', linestyle=':')
-                   for angle in angles]
-        circles[-1].set_linestyle('-')
-        for angle in angles:
-            plt.text(self.camera.zenith['x'],
-                     self.camera.zenith['y']\
-                     + self.camera.theta2r(angle * u.deg) - 10,
-                     "{}".format(angle), color='w')
-        for c in circles:
-            ax.add_patch(c)
-            plt.axis('off')
-        return fig, ax
+        ax = show_img(self, **kwargs)
+        return ax
