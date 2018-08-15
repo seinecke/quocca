@@ -1,10 +1,8 @@
-'''
-quocca: All Sky Camera Analysis Tools
+"""quocca: All Sky Camera Analysis Tools
 
 Images.
 
-2018
-'''
+2018"""
 
 import numpy as np
 from astropy import units as u

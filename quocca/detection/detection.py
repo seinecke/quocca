@@ -1,10 +1,8 @@
-'''
-quocca: All Sky Camera Analysis Tools
+"""quocca: All Sky Camera Analysis Tools
 
 Detection.
 
-2018
-'''
+2018"""
 
 import numpy as np
 from tqdm import tqdm
@@ -46,6 +44,7 @@ def laplacian_gaussian_filter(img, sigma, prec=1e-16):
 
 
 class LLHStarDetection:
+    name = 'llh_star_detection'
     def __init__(self, sigma=1.9, fit_size=5, fit_pos=True, fit_sigma=False,
                  presmoothing=1.5):
         self.sigma = sigma
@@ -95,15 +94,14 @@ class LLHStarDetection:
             sel = self.get_slice((pos[idx,1],
                                   pos[idx,0]),
                                  img.shape)
-            
-            b0 = np.percentile(img[sel], 60)
-            M0 = np.percentile(img[sel], 95) - b0
 
             def fit_function(p):
                 return np.sum((self.blob_func(mx[sel], my[sel], p[2], p[3],
                                               p[0], self.sigma, self.sigma,
                                               0.0, p[1]) - img[sel]) ** 2)
-            r = minimize(fit_function, x0=[0.0, np.mean(img[sel]), pos[idx,1], pos[idx,0]],
+            r = minimize(fit_function,
+                         x0=[0.0, np.mean(img[sel]),
+                             pos[idx,1], pos[idx,0]],
                          method='powell')
             results['M_fit'][idx] = np.abs(r.x[0])
             results['b_fit'][idx] = np.abs(r.x[1])
@@ -116,6 +114,7 @@ class LLHStarDetection:
 
 
 class FilterStarDetection:
+    name = 'filter_star_detection'
     def __init__(self, sigma, fit_size, quantile=100.0):
         self.sigma = sigma
         self.size = (fit_size, fit_size)

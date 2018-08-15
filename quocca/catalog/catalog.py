@@ -1,10 +1,8 @@
-'''
-quocca: All Sky Camera Analysis Tools
+"""quocca: All Sky Camera Analysis Tools
 
 Catalogs.
 
-2018
-'''
+2018"""
 
 import numpy as np
 from ruamel import yaml
