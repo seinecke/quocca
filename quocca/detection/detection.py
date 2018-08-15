@@ -87,7 +87,7 @@ class LLHStarDetection:
         arg = upper / det2
         return np.clip(np.abs(mag) * np.exp(arg) + np.abs(bkg), 0.0, 1.0)
     
-    def detect(self, image, max_mag=5.5, min_dist=6.0):
+    def detect(self, image, max_mag=5.5, min_dist=6.0, verbose=True):
         if self.calibration is None:
             warnings.warn('Method {} for camera {} is not calibrated yet.'
                           .format(self.name, self.camera.name))
@@ -111,7 +111,11 @@ class LLHStarDetection:
             for key in ['M_fit', 'b_fit', 'x_fit', 'y_fit', 'v_mag', 'x', 'y',
                         'cloudiness']
         }
-        for idx in tqdm(range(n_stars)):
+        if verbose:
+            iterator = tqdm(range(n_stars))
+        else:
+            iterator = range(n_stars)
+        for idx in iterator:
             sel = self.get_slice((pos[idx,1],
                                   pos[idx,0]),
                                  img.shape)
@@ -161,7 +165,7 @@ class FilterStarDetection:
         return (slice(a_min, a_max, None),
                 slice(b_min, b_max, None))
 
-    def detect(self, image, max_mag=5.5, min_dist=6.0):
+    def detect(self, image, max_mag=5.5, min_dist=6.0, verbose=True):
         if self.calibration is None:
             warnings.warn('Method {} for camera {} is not calibrated yet.'
                           .format(self.name, self.camera.name))
@@ -181,7 +185,11 @@ class FilterStarDetection:
             key: np.zeros(n_stars)
             for key in ['M_fit', 'v_mag', 'x', 'y', 'cloudiness']
         }
-        for idx in tqdm(range(n_stars)):
+        if verbose:
+            iterator = tqdm(range(n_stars))
+        else:
+            iterator = range(n_stars)
+        for idx in iterator:
             sel = self.get_slice((pos[idx,1],
                                   pos[idx,0]),
                                  img.shape)

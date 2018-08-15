@@ -179,10 +179,10 @@ def fit_camera_params(img_path,
     if verbose: print("Final result:\n  zenith: ({}, {})\n  radius: {}\n  azimuth offset: {}"
                       .format(*x0))
     if update:
-        update_camera(cam.name, **{'zenith': {'x': x0[0],
-                                              'y': x0[1]}, 
-                                   'radius': x0[2],
-                                   'az_offset': x0[3]})
+        update_camera(cam.name, **{'zenith': {'x': float(x0[0]),
+                                              'y': float(x0[1])}, 
+                                   'radius': float(x0[2]),
+                                   'az_offset': float(x0[3])})
     return {'zenith': {'x': x0[0],
                        'y': x0[1]}, 
             'radius': x0[2],

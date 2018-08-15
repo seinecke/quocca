@@ -1,7 +1,7 @@
 cta:
-  az_offset: 87.2737
+  az_offset: 87.30484980650667
   filter_star_detection: 0.08931528109919035
-  llh_star_detection: 0.6709582765927531
+  llh_star_detection: 0.6697400241002911
   location:
     height: 2200.0
     lat: 28.7618172
@@ -9,7 +9,7 @@ cta:
   mapping: nonlin
   mask: resources/cta_mask.png
   max_val: 65536
-  radius: 849.5514
+  radius: 848.8756288919432
   resolution:
     x: 1699
     y: 1699
@@ -20,5 +20,5 @@ cta:
   - UTC1
   - TIMEUTC
   zenith:
-    x: 849.3173
-    y: 849.118
+    x: 848.8933456349624
+    y: 848.573790060579
