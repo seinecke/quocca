@@ -109,7 +109,7 @@ class StarDetectionLLH:
         results = {
             key: np.zeros(n_stars)
             for key in ['M_fit', 'b_fit', 'x_fit', 'y_fit', 'v_mag', 'x', 'y',
-                        'cloudiness']
+                        'visibility']
         }
         if verbose:
             iterator = tqdm(range(n_stars))
@@ -129,8 +129,8 @@ class StarDetectionLLH:
                              pos[idx,1], pos[idx,0]],
                          method='powell')
             results['M_fit'][idx] = np.abs(r.x[0])
-            cloudiness = np.abs(r.x[0]) / np.exp(-image.star_mag[mask][idx])
-            results['cloudiness'][idx] = np.clip(cloudiness * self.calibration,
+            visibility = np.abs(r.x[0]) / np.exp(-image.star_mag[mask][idx])
+            results['visibility'][idx] = np.clip(visibility * self.calibration,
                                                  0.0, 1.0)
             results['b_fit'][idx] = np.abs(r.x[1])
             results['x_fit'][idx] = r.x[2]
@@ -183,7 +183,7 @@ class StarDetectionFilter:
         pos = image.star_pos[mask]
         results = {
             key: np.zeros(n_stars)
-            for key in ['M_fit', 'v_mag', 'x', 'y', 'cloudiness']
+            for key in ['M_fit', 'v_mag', 'x', 'y', 'visibility']
         }
         if verbose:
             iterator = tqdm(range(n_stars))
@@ -197,8 +197,8 @@ class StarDetectionFilter:
             M = np.percentile(img[sel], self.quantile)
 
             results['M_fit'][idx] = M
-            cloudiness = M / np.exp(-image.star_mag[mask][idx])
-            results['cloudiness'][idx] = np.clip(cloudiness * self.calibration,
+            visibility = M / np.exp(-image.star_mag[mask][idx])
+            results['visibility'][idx] = np.clip(visibility * self.calibration,
                                                  0.0, 1.0)
             results['v_mag'][idx] = image.star_mag[mask][idx]
             results['x'][idx] = image.star_pos[mask, 0][idx]
