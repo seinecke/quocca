@@ -50,7 +50,7 @@ def laplacian_gaussian_filter(img, sigma, prec=1e-16):
     return convolve(img, kernel)
 
 
-class LLHStarDetection:
+class StarDetectionLLH:
     name = 'llh_star_detection'
 
     def __init__(self, camera, sigma=1.9, fit_size=5, fit_pos=True,
@@ -141,7 +141,7 @@ class LLHStarDetection:
         return results
 
 
-class FilterStarDetection:
+class StarDetectionFilter:
     name = 'filter_star_detection'
     def __init__(self, camera, sigma, fit_size, quantile=100.0):
         self.sigma = sigma

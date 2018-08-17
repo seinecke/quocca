@@ -1,3 +1,3 @@
-from .detection import LLHStarDetection, FilterStarDetection
+from .detection import StarDetectionLLH, StarDetectionFilter
 
-__all__ = ['LLHStarDetection', 'FilterStarDetection']
+__all__ = ['StarDetectionLLH', 'StarDetectionFilter']
