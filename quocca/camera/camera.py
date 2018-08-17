@@ -25,7 +25,7 @@ class Camera:
     location : astropy.coordinates.EarthLocation object
         Location of the camera.
     mask : scipy.interpolate.RegularGridInterpolator
-        Camera-specific mask of permanently obstured objects in field of view.
+        Camera-specific mask of permanently obscured objects in field of view.
     name : str
         Name of the camera.
     
@@ -41,12 +41,14 @@ class Camera:
         __supported_cameras__ = list(__config__.keys())
     
     def __init__(self, name):
-        """Constructor.
+        """Constructor. Camera-specific settings are specified.
+        If necessary, also a mask is applied, indicating regions in the field of 
+        view, where buildings, nature etc obstruct the observation of the sky.
         
         Parameters
         ----------
         name : str
-            Name of the character.
+            Name of the camera.
         """
         if name not in self.__supported_cameras__:
             raise NotImplementedError('Unsupported Camera {}'.format(name))
@@ -68,7 +70,7 @@ class Camera:
     
     def theta2r(self, theta):
         """Converts an altitude `theta` into a apparent radius in pixels. Used
-        function depends on attribute :attribute:`mapping`. Currently, only
+        function depends on attribute `mapping`. Currently, only
         `lin` and `nonlin` are supported.
         
         Parameters
@@ -79,7 +81,7 @@ class Camera:
         Returns
         -------
         r : numpy.array
-            Calculated radii
+            Calculated radius in pixels.
         """
         if self.mapping == 'lin':
             return self.radius / (np.pi * u.rad / 2.0) * theta.to(u.rad)
@@ -91,7 +93,7 @@ class Camera:
         
     def r2theta(self, r):
         """Converts a radius in pixels `r` into an altitude. Used function
-        depends on attribute :attribute:`mapping`. Currently, only `lin` and
+        depends on attribute `mapping`. Currently, only `lin` and
         `nonlin` are supported.
         
         Parameters
@@ -102,7 +104,7 @@ class Camera:
         Returns
         -------
         theta : numpy.array
-            Calculated altitude in degrees
+            Calculated altitude in degrees.
         """
         if self.mapping == 'lin':
             return r * (np.pi * u.rad) / (2.0 * self.radius)
@@ -110,8 +112,8 @@ class Camera:
             return 2.0 * np.arcsin(np.sqrt(2.0) * r / self.radius)
         
     def check_mask(self, x, y):
-        """Checks whether or not within the bounds of the mask provided. True
-        means the checked point may not be obstructed by an permanently present
+        """Checks whether or not if a point is within the bounds of the mask provided. True
+        means the checked point should not be obstructed by a permanently present
         object.
         
         Parameters
@@ -134,7 +136,7 @@ class Camera:
         Parameters
         ----------
         catalog : quocca.catalog.Catalog object
-            The catalog containing the stars to be projected.
+            Catalog containing the stars to be projected.
         time : astropy.time.Time object
             Timestamp.
         
@@ -151,3 +153,4 @@ class Camera:
         row = -r * np.sin(phi + self.az_offset) + self.zenith['x']
         col = r * np.cos(phi + self.az_offset) + self.zenith['y']
         return np.column_stack((row, col)), catalog['v_mag']
+        
