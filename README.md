@@ -14,13 +14,13 @@ To process an image, objects of the classes `Camera`, `Catalog` and `Image` are 
 from quocca.camera import Camera
 from quocca.catalog import Catalog
 from quocca.image import Image
-from quocca.detection import FilterStarDetection
+from quocca.detection import StarDetectionFilter
 
 
 cat = Catalog('hipparcos')
 cam = Camera('cta')
 img = Image('test.mat', cam, cat)
-det = FilterStarDetection(1.7, 8)
+det = StarDetectionFilter(cam, sigma=1.7, fit_size=8)
 result = det.detect(img, max_mag=20.0, min_dist=16)
 ``` 
 ### Calibrating Camera Parameters
@@ -44,7 +44,7 @@ from quocca.utilities import calibrate_method
 
 
 cam = Camera('cta')
-det = LLHStarDetection(cam, 1.7, 8)
+det = StarDetectionLLH(cam, 1.7, 8)
 calibrate_method('clear_image.mat', cam, det, update=True)
 ```
-This calibrates the estimated cloudiness of the method `LLHStarDetection`. The configs are updated automatically.
+This calibrates the estimated visibility of the method `StarDetectionLLH`. The configs are updated automatically.
