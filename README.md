@@ -35,16 +35,16 @@ Methods for calibration are found in `quocca.utilities`.
 from quocca.utilities import calibrate_method
 
 cam = Camera('cta')
-fit_camera_params('/Users/thoinka/clear_2015_12_29-21_17_04.mat', cam, update=True)
+fit_camera_params('2015_11_04-00_01_31.mat', cam, update=True)
 ```
-This fits camera parameters to a clear sky image and updates the configs automatically.
+This fits camera parameters (e.g. position of the zenith in the image, or an azimut offset) to a clear sky image and updates the configs automatically.
 
 ```python
 from quocca.utilities import calibrate_method
 
 
 cam = Camera('cta')
-det = StarDetectionLLH(cam, 1.7, 8)
-calibrate_method('clear_image.mat', cam, det, update=True)
+det = StarDetectionLLH(cam, sigma=1.7, fit_size=8)
+calibrate_method('2015_11_04-00_01_31.mat', cam, det, update=True)
 ```
 This calibrates the estimated visibility of the method `StarDetectionLLH`. The configs are updated automatically.
