@@ -125,38 +125,34 @@ def show_img(img, ax=None, upper=99.8, alt_circles=[30, 60]):
     return ax
 
 
-def show_stars(posx, posy, mag, max_mag, ax=None, detected=None, star_size=30, color='#7ac143'):
+def add_circle(posx, posy, mag, max_mag=20.0, size=30, color='#7ac143', ax=None):
+    
     if ax is None:
         fig, ax = plt.subplots(figsize=(12, 12))
         
     display = mag < max_mag
     ax.scatter(posx[display], posy[display],
-               s=star_size, marker='o', facecolor='', edgecolor=color)
-    if detected is not None:
-        ax.scatter(posx[display], posy[display],
-                   s=star_size * detected, marker='o', facecolor=color, edgecolor='')
-    return ax
+               s=size, marker='o', facecolor='', edgecolor=color)
 
-
-def add_circle(y, x, mag, ax, max_mag=20.0, size=20, color='red'):
-    mask = mag < max_mag
-    ax.scatter(y[mask], x[mask], s=size,
-               marker='o', facecolor='', edgecolor=color)
     return ax
 
 
 def compare_used_stars_to_catalog(img, res, max_mag=3.0):
+
     color_catalog = '#7ac143'
     color_used_stars = 'mediumblue'
 
-    ax = img.show(show_stars=True, max_mag=max_mag, color=color_catalog)
-    ax = add_circle(res.y, res.x, res.v_mag, ax, max_mag=max_mag, 
-                    color=color_used_stars)
+    ax = img.show()
+    ax = add_circle(img.star_pos[:,1], img.star_pos[:,0], img.star_mag, 
+                    ax=ax, max_mag=max_mag, 
+                    color=color_catalog, size=20)
+    ax = add_circle(res.y, res.x, res.v_mag, ax=ax, max_mag=max_mag, 
+                    color=color_used_stars, size=60)
 
-    ax.text(0.99, 0.95, 'Catalog Stars', color=color_catalog,
+    ax.text(0.99, 0.99, 'Catalog Stars', color=color_catalog,
              horizontalalignment='right', verticalalignment='top',
              transform=ax.transAxes)
-    ax.text(0.99, 0.95, '\nUsed Stars', color=color_used_stars,
+    ax.text(0.99, 0.99, '\nUsed Stars', color=color_used_stars,
              horizontalalignment='right', verticalalignment='top',
              transform=ax.transAxes)
 
@@ -164,19 +160,20 @@ def compare_used_stars_to_catalog(img, res, max_mag=3.0):
 
 
 def compare_fitted_to_true_positions(img, res, max_mag=3.0):
+
     color_fitted = 'darkorange'
     color_true = 'mediumblue'
 
-    ax = img.show(show_stars=False)
-    ax = add_circle(res.y_fit, res.x_fit, res.v_mag, ax, max_mag=max_mag, 
+    ax = img.show()
+    ax = add_circle(res.y_fit, res.x_fit, res.v_mag, ax=ax, max_mag=max_mag, 
                     color=color_fitted, size=20)
-    ax = add_circle(res.y, res.x, res.v_mag, ax, max_mag=max_mag, 
+    ax = add_circle(res.y, res.x, res.v_mag, ax=ax, max_mag=max_mag, 
                     color=color_true, size=60)
 
-    ax.text(0.99, 0.95, 'Fitted', color=color_fitted,
+    ax.text(0.99, 0.99, 'Fitted', color=color_fitted,
              horizontalalignment='right', verticalalignment='top',
              transform=ax.transAxes)
-    ax.text(0.99, 0.95, '\nTrue', color=color_true,
+    ax.text(0.99, 0.99, '\nTrue', color=color_true,
              horizontalalignment='right', verticalalignment='top',
              transform=ax.transAxes)
 
@@ -184,6 +181,10 @@ def compare_fitted_to_true_positions(img, res, max_mag=3.0):
 
 
 def compare_estimated_to_true_magnitude(res, det, ax=None):
+
+    if ax is None:
+        fig, ax = plt.subplots(figsize=(6, 5))
+
     lowx = res.v_mag.min()
     upx = res.v_mag.max()
     binsx = (upx-lowx)/0.1
@@ -192,50 +193,102 @@ def compare_estimated_to_true_magnitude(res, det, ax=None):
     upy = np.log(res.M_fit).max()
     binsy = (upy-lowy)/0.1
 
-    plt.hist2d((res.v_mag), np.log(res.M_fit), 
-           bins=(binsx,binsy), range=((lowx, upx),(lowy,upy)), 
-           norm=LogNorm(),
-           cmap='Greens_r'
-          )
-    plt.plot([-5,25], -np.log(det.calibration) - np.array([-5,25]), 
-        'r-', label='Clear Sky')
+    _, _, _, pos = ax.hist2d((res.v_mag), np.log(res.M_fit), 
+                              bins=(binsx,binsy), 
+                              range=((lowx, upx),(lowy,upy)), 
+                              norm=LogNorm(),
+                              cmap='Greens_r'
+                             )
+    ax.plot([-5,25], -np.log(det.calibration) - np.array([-5,25]), 
+            'r-', label='Clear Sky')
 
-    plt.colorbar()
-    plt.legend(frameon=False, loc='lower left')
-    plt.xlabel('True Magnitude')
-    plt.ylabel('Estimated Magnitude')
+    fig.colorbar(pos, ax=ax)
+    ax.legend(frameon=False, loc='lower left')
+    ax.set_xlabel('True Magnitude')
+    ax.set_ylabel('Estimated Magnitude')
 
     return ax
 
 
 def compare_visibility_to_magnitude(res, ax=None):
+
+    if ax is None:
+        fig, ax = plt.subplots(figsize=(8, 5))
+
     lowx = res.v_mag.min()
     upx = res.v_mag.max()
     binsx = (upx-lowx)/0.1
 
-    plt.hist2d(res.v_mag, res.visibility,
-               norm=LogNorm(), bins=(binsx, 60), 
-               range=((lowx,upx),(-0.1,3)),
-               cmap='Greens_r')
+    _, _, _, pos = ax.hist2d(res.v_mag, res.visibility,
+                             norm=LogNorm(), bins=(binsx, 60), 
+                             range=((lowx,upx),(-0.1,3)),
+                             cmap='Greens_r')
 
-    plt.colorbar()
-    plt.xlabel('True Magnitude')
-    plt.ylabel('Visibility')
+    fig.colorbar(pos, ax=ax)
+    ax.set_xlabel('True Magnitude')
+    ax.set_ylabel('Visibility')
 
     return ax
 
 
-def plot_visibility(vis, color='#7ac143', label=''):
+def plot_visibility(vis, color='#7ac143', label='', ax=None):
 
-    plt.hist(vis, bins=50, range=(-0.1,5),
+    if ax is None:
+        fig, ax = plt.subplots(figsize=(8, 5))
+
+    ax.hist(vis, bins=50, range=(-0.1,5),
          color=color, alpha=0.5, normed=True,
          label=label
         )
-    plt.xlabel('Visibility')
-    plt.ylabel('Normalised Number of Events')
-    plt.legend(frameon=False)
+    ax.set_xlabel('Visibility')
+    ax.set_ylabel('Normalised Number of Events')
+    ax.legend(frameon=False)
+
+    return ax
 
 
+def skymap_visibility(img, res, max_mag=5.0):
+
+    color1 = 'red'
+    color2 = 'yellow'
+    color3 = 'lime'
+    color4 = 'darkgreen'
+
+    ax = img.show()
+
+    mask = res.visibility < 0.5
+    ax = add_circle(res.y_fit[mask], res.x_fit[mask], res.v_mag[mask], 
+                    ax=ax, max_mag=max_mag, 
+                    color=color1, size=20)
+    ax.text(0.99, 0.99, 'Visibility < 0.5', color=color1,
+             horizontalalignment='right', verticalalignment='top',
+             transform=ax.transAxes)
+
+    mask = (res.visibility > 0.5) & (res.visibility < 1)
+    ax = add_circle(res.y_fit[mask], res.x_fit[mask], res.v_mag[mask], 
+                    ax=ax, max_mag=max_mag, 
+                    color=color2, size=20)
+    ax.text(0.99, 0.97, '0.5 < Visibility < 1.0', color=color2,
+             horizontalalignment='right', verticalalignment='top',
+             transform=ax.transAxes)
+
+    mask = (res.visibility > 1) & (res.visibility < 1.5)
+    ax = add_circle(res.y_fit[mask], res.x_fit[mask], res.v_mag[mask], 
+                    ax=ax, max_mag=max_mag, 
+                    color=color3, size=20)
+    ax.text(0.99, 0.95, '1.0 < Visibility < 1.5', color=color3,
+             horizontalalignment='right', verticalalignment='top',
+             transform=ax.transAxes)
+
+    mask = (res.visibility > 1.5)
+    ax = add_circle(res.y_fit[mask], res.x_fit[mask], res.v_mag[mask], 
+                    ax=ax, max_mag=max_mag, 
+                    color=color4, size=20)
+    ax.text(0.99, 0.93, '1.5 < Visibility', color=color4,
+             horizontalalignment='right', verticalalignment='top',
+             transform=ax.transAxes)
+
+    return ax
 
 
 
