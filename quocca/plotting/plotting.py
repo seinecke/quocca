@@ -12,7 +12,7 @@ from matplotlib.patches import Circle
 from astropy import units as u
 
 
-def show_img(img, ax=None, show_stars=False, max_mag=3.0, upper=99.8):
+def show_img(img, ax=None, show_stars=False, max_mag=3.0, color='#7ac143', upper=99.8):
     """Shows the image img.
 
     Parameters
@@ -43,9 +43,9 @@ def show_img(img, ax=None, show_stars=False, max_mag=3.0, upper=99.8):
     if show_stars:
         display = img.star_mag < max_mag
         ax.scatter(img.star_pos[display, 1], img.star_pos[display, 0], s=50,
-               marker='o', facecolor='', edgecolor='#7ac143')
+               marker='o', facecolor='', edgecolor=color)
     
-    angles = [15, 30, 45, 60, 75, 90]
+    angles = [30, 60, 90]
     circles = [Circle((img.camera.zenith['x'],
                        img.camera.zenith['y']),
                        img.camera.theta2r(angle * u.deg),
@@ -66,3 +66,76 @@ def show_img(img, ax=None, show_stars=False, max_mag=3.0, upper=99.8):
              transform=ax.transAxes)
 
     return ax
+
+
+def add_circle(y, x, mag, ax, max_mag=20.0, size=20, color='red'):
+
+    mask = mag < max_mag
+    ax.scatter(y[mask], x[mask], s=size,
+               marker='o', facecolor='', edgecolor=color)
+
+    return ax
+
+
+def compare_used_stars_to_catalog(img, res, max_mag=3.0):
+
+    color_catalog = '#7ac143'
+    color_used_stars = 'mediumblue'
+
+    ax = img.show(show_stars=True, max_mag=max_mag, color=color_catalog)
+    ax = add_circle(res.y, res.x, res.v_mag, ax, max_mag=max_mag, 
+                    color=color_used_stars)
+
+    ax.text(0.99, 0.95, 'Catalog Stars', color=color_catalog,
+             horizontalalignment='right', verticalalignment='top',
+             transform=ax.transAxes)
+    ax.text(0.99, 0.95, '\nUsed Stars', color=color_used_stars,
+             horizontalalignment='right', verticalalignment='top',
+             transform=ax.transAxes)
+
+    return ax
+
+
+def compare_fitted_to_true_positions(img, res, max_mag=3.0):
+
+    color_fitted = 'darkorange'
+    color_true = 'mediumblue'
+
+    ax = img.show(show_stars=False)
+    ax = add_circle(res.y_fit, res.x_fit, res.v_mag, ax, max_mag=max_mag, 
+                    color=color_fitted, size=20)
+    ax = add_circle(res.y, res.x, res.v_mag, ax, max_mag=max_mag, 
+                    color=color_true, size=60)
+
+    ax.text(0.99, 0.95, 'Fitted', color=color_fitted,
+             horizontalalignment='right', verticalalignment='top',
+             transform=ax.transAxes)
+    ax.text(0.99, 0.95, '\nTrue', color=color_true,
+             horizontalalignment='right', verticalalignment='top',
+             transform=ax.transAxes)
+
+    return ax
+
+
+def plot_visibility(res, ax=None):
+
+    lowx = res.v_mag.min()
+    upx = res.v_mag.max()
+    binsx = (upx-lowx)/0.1
+
+    lowy = np.log(res.M_fit).min()
+    upy = np.log(res.M_fit).max()
+    binsy = (upy-lowy)/0.1
+
+    plt.hist2d((res.v_mag), np.log(res.M_fit), 
+           bins=(binsx,binsy), range=((lowx, upx),(lowy,upy)), 
+           norm=LogNorm(),
+           cmap='Greens'
+          )
+    plt.colorbar()
+    plt.xlabel('True Magnitude')
+    plt.ylabel('Estimated Magnitude')
+
+
+
+
