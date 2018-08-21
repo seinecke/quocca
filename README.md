@@ -32,7 +32,7 @@ Calibrating a camera is necessary for multiple reasons, namely
 Methods for calibration are found in `quocca.utilities`.
 
 ```python
-from quocca.utilities import calibrate_method
+from quocca.utilities import fit_camera_params
 
 cam = Camera('cta')
 fit_camera_params('2015_11_04-00_01_31.mat', cam, update=True)
