@@ -160,3 +160,19 @@ def compare_visibility_to_magnitude(res, ax=None):
     plt.ylabel('Visibility')
 
     return ax
+
+
+def plot_visibility(vis, color='#7ac143', label=''):
+
+    plt.hist(vis, bins=50, range=(-0.1,5),
+         color=color, alpha=0.5, normed=True,
+         label=label
+        )
+    plt.xlabel('Visibility')
+    plt.ylabel('Normalised Number of Events')
+    plt.legend(frameon=False)
+
+
+
+
+
