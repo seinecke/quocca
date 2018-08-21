@@ -8,6 +8,7 @@ import numpy as np
 
 from matplotlib import pyplot as plt
 from matplotlib.patches import Circle
+from matplotlib.colors import LogNorm
 
 from astropy import units as u
 
@@ -117,7 +118,7 @@ def compare_fitted_to_true_positions(img, res, max_mag=3.0):
     return ax
 
 
-def plot_visibility(res, ax=None):
+def compare_estimated_to_true_magnitude(res, det, ax=None):
 
     lowx = res.v_mag.min()
     upx = res.v_mag.max()
@@ -130,12 +131,32 @@ def plot_visibility(res, ax=None):
     plt.hist2d((res.v_mag), np.log(res.M_fit), 
            bins=(binsx,binsy), range=((lowx, upx),(lowy,upy)), 
            norm=LogNorm(),
-           cmap='Greens'
+           cmap='Greens_r'
           )
+    plt.plot([-5,25], -np.log(det.calibration) - np.array([-5,25]), 
+        'r-', label='Clear Sky')
+
     plt.colorbar()
+    plt.legend(frameon=False, loc='lower left')
     plt.xlabel('True Magnitude')
     plt.ylabel('Estimated Magnitude')
 
+    return ax
 
 
+def compare_visibility_to_magnitude(res, ax=None):
 
+    lowx = res.v_mag.min()
+    upx = res.v_mag.max()
+    binsx = (upx-lowx)/0.1
+
+    plt.hist2d(res.v_mag, res.visibility,
+               norm=LogNorm(), bins=(binsx, 60), 
+               range=((lowx,upx),(-0.1,3)),
+               cmap='Greens_r')
+
+    plt.colorbar()
+    plt.xlabel('True Magnitude')
+    plt.ylabel('Visibility')
+
+    return ax
