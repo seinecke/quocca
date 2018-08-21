@@ -5,6 +5,7 @@ Detection.
 2018"""
 
 import numpy as np
+import pandas as pd
 from tqdm import tqdm
 from scipy.spatial import cKDTree
 from scipy.optimize import minimize
@@ -53,7 +54,7 @@ def laplacian_gaussian_filter(img, sigma, prec=1e-16):
 class StarDetectionLLH:
     name = 'llh_star_detection'
 
-    def __init__(self, camera, sigma=1.9, fit_size=5, fit_pos=True,
+    def __init__(self, camera, sigma=1.7, fit_size=8, fit_pos=True,
                  fit_sigma=False, presmoothing=1.5):
         self.sigma = sigma
         self.size = (fit_size, fit_size)
@@ -87,7 +88,7 @@ class StarDetectionLLH:
         arg = upper / det2
         return np.clip(np.abs(mag) * np.exp(arg) + np.abs(bkg), 0.0, 1.0)
     
-    def detect(self, image, max_mag=5.5, min_dist=6.0, verbose=True):
+    def detect(self, image, max_mag=7.0, min_dist=16.0, verbose=True):
         if self.calibration is None:
             warnings.warn('Method {} for camera {} is not calibrated yet.'
                           .format(self.name, self.camera.name))
@@ -125,20 +126,24 @@ class StarDetectionLLH:
                                               p[0], self.sigma, self.sigma,
                                               0.0, p[1]) - img[sel]) ** 2)
             r = minimize(fit_function,
-                         x0=[0.0, np.mean(img[sel]),
+                         #x0=[0.0, np.mean(img[sel]),
+                         x0=[np.max(img[sel]) - np.min(img[sel]), 
+                             #np.min(img[sel]),
+                             np.mean(img[sel]),
                              pos[idx,1], pos[idx,0]],
                          method='powell')
             results['M_fit'][idx] = np.abs(r.x[0])
             visibility = np.abs(r.x[0]) / np.exp(-image.star_mag[mask][idx])
-            results['visibility'][idx] = np.clip(visibility * self.calibration,
-                                                 0.0, 1.0)
+            #results['visibility'][idx] = np.clip(visibility * self.calibration,
+            #                                     0.0, 1.0)
+            results['visibility'][idx] = visibility * self.calibration
             results['b_fit'][idx] = np.abs(r.x[1])
-            results['x_fit'][idx] = r.x[2]
-            results['y_fit'][idx] = r.x[3]
+            results['y_fit'][idx] = r.x[2]
+            results['x_fit'][idx] = r.x[3]
             results['v_mag'][idx] = image.star_mag[mask][idx]
             results['x'][idx] = image.star_pos[mask, 0][idx]
             results['y'][idx] = image.star_pos[mask, 1][idx]
-        return results
+        return pd.DataFrame(results)
 
 
 class StarDetectionFilter:
@@ -198,9 +203,10 @@ class StarDetectionFilter:
 
             results['M_fit'][idx] = M
             visibility = M / np.exp(-image.star_mag[mask][idx])
-            results['visibility'][idx] = np.clip(visibility * self.calibration,
-                                                 0.0, 1.0)
+            #results['visibility'][idx] = np.clip(visibility * self.calibration,
+            #                                     0.0, 1.0)
+            results['visibility'][idx] = visibility * self.calibration
             results['v_mag'][idx] = image.star_mag[mask][idx]
             results['x'][idx] = image.star_pos[mask, 0][idx]
             results['y'][idx] = image.star_pos[mask, 1][idx]
-        return results
+        return pd.DataFrame(results)
