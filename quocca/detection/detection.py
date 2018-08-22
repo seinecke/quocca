@@ -14,6 +14,7 @@ from skimage.filters import gaussian
 from ruamel import yaml
 from pkg_resources import resource_filename
 import warnings
+from astropy.time import Time
 
 
 class CalibrationWarning(Warning):
@@ -51,6 +52,46 @@ def laplacian_gaussian_filter(img, sigma, prec=1e-16):
     return convolve(img, kernel)
 
 
+def mean_cov(mx, my, M):
+    norm = np.sum(M)
+    mean_x = np.sum(mx * M) / norm
+    mean_y = np.sum(my * M) / norm
+    mean_xx = np.sum(mx ** 2 * M) / norm
+    mean_yy = np.sum(my ** 2 * M) / norm
+    mean_xy = np.sum(mx * my * M) / norm
+    mean = np.array([mean_x, mean_y])
+    cov = np.array([[mean_xx - mean_x ** 2, mean_xy - mean_x * mean_y],
+                    [mean_xy - mean_x * mean_y, mean_yy - mean_y ** 2]])
+    return mean, cov
+
+
+def get_calibration(cam_name, meth_name, time):
+    with open(resource_filename('quocca', 'resources/cameras.yaml')) as file:
+        config = yaml.safe_load(file)
+        try:
+            calibration = config[cam_name][meth_name]
+            calib_keys = list(calibration.keys())
+            times = {c: Time(c) for c in calib_keys}
+            available = False
+            chosen_key = None
+            for c, t in times.items():
+                if time > t:
+                    if chosen_key is None:
+                        chosen_key = c
+                    elif time - t < time - times[chosen_key]:
+                        chosen_key = c
+            try:
+                return calibration[chosen_key]
+            except:
+                warnings.warn('No calibration setting found.')
+                return 1.0
+
+
+        except KeyError:
+            warnings.warn('No calibration setting found.')
+            return 1.0
+
+
 class StarDetectionLLH:
     name = 'llh_star_detection'
 
@@ -62,13 +103,6 @@ class StarDetectionLLH:
         self.fit_sigma = fit_sigma
         self.presmoothing = presmoothing
         self.camera = camera
-        with open(resource_filename('quocca', 'resources/cameras.yaml')) as file:
-            config = yaml.safe_load(file)
-            try:
-                self.calibration = config[self.camera.name][self.name]
-            except KeyError:
-                warnings.warn('No calibration setting found.')
-                self.calibration = None
 
     def get_slice(self, pos, shape):
         pos = list(np.round(pos).astype(int))
@@ -88,11 +122,8 @@ class StarDetectionLLH:
         arg = upper / det2
         return np.clip(np.abs(mag) * np.exp(arg) + np.abs(bkg), 0.0, 1.0)
     
-    def detect(self, image, max_mag=7.0, min_dist=16.0, verbose=True):
-        if self.calibration is None:
-            warnings.warn('Method {} for camera {} is not calibrated yet.'
-                          .format(self.name, self.camera.name))
-            self.calibration = 1.0
+    def detect(self, image, max_mag=7.0, min_dist=16.0, verbose=True, remove_detected_stars=False):
+        self.calibration = get_calibration(self.camera.name, self.name, image.time)
         img = gaussian(image.image, self.presmoothing)
         tx = np.arange(img.shape[0])
         ty = np.arange(img.shape[1])
@@ -112,26 +143,32 @@ class StarDetectionLLH:
             for key in ['M_fit', 'b_fit', 'x_fit', 'y_fit', 'v_mag', 'x', 'y',
                         'visibility']
         }
+        mag_sort_idx = np.argsort(image.star_mag[mask])
         if verbose:
-            iterator = tqdm(range(n_stars))
+            iterator = tqdm(mag_sort_idx, total=len(mag_sort_idx))
         else:
-            iterator = range(n_stars)
+            iterator = mag_sort_idx
         for idx in iterator:
             sel = self.get_slice((pos[idx,1],
                                   pos[idx,0]),
                                  img.shape)
-
             def fit_function(p):
                 return np.sum((self.blob_func(mx[sel], my[sel], p[2], p[3],
                                               p[0], self.sigma, self.sigma,
                                               0.0, p[1]) - img[sel]) ** 2)
+            mean, cov = mean_cov(mx[sel], my[sel], (img[sel] - np.min(img[sel])) ** 3)
             r = minimize(fit_function,
                          #x0=[0.0, np.mean(img[sel]),
-                         x0=[np.max(img[sel]) - np.min(img[sel]), 
+                         x0=[np.max(img[sel]) - np.mean(img[sel]), 
                              #np.min(img[sel]),
                              np.mean(img[sel]),
                              pos[idx,1], pos[idx,0]],
-                         method='powell')
+                             #mean[0], mean[1]],
+                         method='Powell')
+            if remove_detected_stars:
+                img[sel] -= self.blob_func(mx[sel], my[sel], r.x[2], r.x[3],
+                                              r.x[0], self.sigma, self.sigma,
+                                              0.0, 0.0)
             results['M_fit'][idx] = np.abs(r.x[0])
             visibility = np.abs(r.x[0]) / np.exp(-image.star_mag[mask][idx])
             #results['visibility'][idx] = np.clip(visibility * self.calibration,

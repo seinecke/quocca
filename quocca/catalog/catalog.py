@@ -19,7 +19,6 @@ class Catalog(Table):
         __supported_catalogs__ = list(__config__.keys())
         
     def __init__(self, name):
-
         if name not in self.__supported_catalogs__:
             raise NotImplementedError('Unsupported Catalog {}'.format(name))
         super(Catalog, self).__init__(Table.read(resource_filename('quocca', self.__config__[name]['file'])))

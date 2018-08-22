@@ -11,6 +11,7 @@ from ..catalog import Catalog
 from ..image import Image
 from astropy.coordinates import Angle
 import astropy.units as u
+from astropy.time import Time
 from skimage.filters import gaussian
 from ruamel import yaml
 from pkg_resources import resource_filename
@@ -29,8 +30,8 @@ def project_stars(altaz, radius, zx, zy, ao):
 def update_camera(name, **kwargs):
     with open(resource_filename('quocca', 'resources/cameras.yaml')) as file:
         __config__ = yaml.safe_load(file)
-        __supported_catalogs__ = list(__config__.keys())
-    if name not in __supported_catalogs__:
+        __supported_cameras__ = list(__config__.keys())
+    if name not in __supported_cameras__:
         raise NameError('Camera {} does not exist.'
                         .format(name))
     __config__[name].update(kwargs)
@@ -190,17 +191,55 @@ def fit_camera_params(img_path,
 
 
 def calibrate_method(img_path, cam, method, verbose=False, update=True,
-                     **kwargs):
+                     time=None, **kwargs):
     """Calibrates a method for a camera, i.e. fits the response of the camera
     to a certain star detection method using a very clear night sky image.
+
+    Parameters
+    ----------
+    img_path : str
+        Path to clear sky image for calibration
+    cam : quocca.camera.Camera object
+        Camera
+    method : quocca.detection object
+        Method to calibrate
+    verbose : bool
+        Whether or not to show status messages
+    update : bool
+        Whether or not to update Settings automatically
+    time : None, astropy.time.Time object or 0
+        Start of calibration period. If None, then the timestamp of the image
+        is used. If 0 then the calibration is used as default.
+
+    Returns
+    -------
+    dict
     """
     if verbose: print('Reading in catalog ...')
     cat = Catalog('hipparcos')
     if verbose: print('Reading in image ...')
     img = Image(img_path, cam, cat)
     if verbose: print('Detecting stars ...')
-    result = method.detect(img, **kwargs)
-    calibration = 1.0 / np.median(result['M_fit'] / np.exp(-result['v_mag'])) 
+    det = method(cam, **kwargs)
+    result = det.detect(img)
+    calibration = 1.0 / np.median(result['M_fit'] / np.exp(-result['v_mag']))
+    with open(resource_filename('quocca', 'resources/cameras.yaml')) as file:
+        __config__ = yaml.safe_load(file)
+        __supported_cameras__ = list(__config__.keys())
+    if cam.name not in __supported_cameras__:
+        raise NameError('Camera {} does not exist.'
+                        .format(name))
+    try:
+        params = __config__[cam.name][method.name]
+    except KeyError:
+        params = {}
+    if time == 0:
+        time = '1970-01-01T00:00:01.000'
+    elif time == None:
+        time = str(img.time)
+    else:
+        time = str(time)
+    params.update({time: float(calibration)})
     if update:
-        update_camera(cam.name, **{method.name: float(calibration)})
-    return {method.name: calibration}
+        update_camera(cam.name, **{method.name: params})
+    return params
