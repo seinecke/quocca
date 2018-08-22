@@ -39,7 +39,8 @@ class Catalog(Table):
         pos_altaz : astropy.coordinates.sky_coordinate.SkyCoord object
             Positions in altitude and azimuth.
         """
-        pos = SkyCoord(ra=self['ra'], dec=self['dec'], frame='icrs', unit='deg')
+        pos = SkyCoord(ra=self['ra'], dec=self['dec'],
+                       frame='icrs', unit='deg')
         pos_altaz = pos.transform_to(AltAz(obstime=time,
                                            location=camera.location,
                                            pressure=atm))

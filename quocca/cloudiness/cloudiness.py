@@ -13,7 +13,7 @@ from skimage.filters import gaussian
 
 
 class CloudinessCalculator:
-    """Cloudiness base class
+    """Cloudinessase class
     """
     def __init__(self, *args, **kwargs):
         pass
@@ -77,7 +77,7 @@ class GaussianRunningAvg(CloudinessCalculator):
         d = distance_matrix(self.pos_train, pos)
         w = np.exp(-d ** 2 / (2.0 * self.radius ** 2))
         norm = np.sum(self.weights.reshape(-1,1) * w, axis=0).reshape(1,-1)
-        return np.sum(w * (self.weights * self.fit_results).reshape(-1,1), axis=0) / norm
+        return np.sum(w * (self.weights * self.fit_results).values.reshape(-1,1), axis=0) / norm
 
 
 class RunningAvg(CloudinessCalculator):
@@ -105,16 +105,20 @@ class RunningAvg(CloudinessCalculator):
 
 
 def cloud_map(x, y, fit_results, extent, size, cloudiness_calc, smoothing=None,
-              **kwargs):
+              verbose=False, **kwargs):
     tx = np.linspace(0, extent[0], size[0])
     ty = np.linspace(0, extent[1], size[1])
     mx, my = np.meshgrid(tx, ty)
     reg = cloudiness_calc(**kwargs)
-    print("Fitting model ...")
+    if verbose: print("Fitting model ...")
     reg.fit(x, y, fit_results)
-    print("Applying model ...")
+    if verbose: print("Applying model ...")
     pred = np.zeros(mx.shape)
-    for i in tqdm(range(len(mx))):
+    if verbose:
+        iterator = tqdm(range(len(mx)))
+    else:
+        iterator = range(len(mx))
+    for i in iterator:
         pred[i, :] = reg.predict(mx[i,:], my[i,:])
     if smoothing is not None:
         pred = gaussian(pred, smoothing)
