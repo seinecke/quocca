@@ -6,7 +6,7 @@ Cloudiness.
 
 from sklearn.neighbors.regression import KNeighborsRegressor, check_array, _get_weights
 import numpy as np
-from scipy.spatial import cKDTree
+from scipy.spatial import cKDTree, distance_matrix
 from tqdm import tqdm
 import ruamel.yaml as yaml
 from skimage.filters import gaussian
@@ -58,6 +58,26 @@ class KNNMedian(CloudinessCalculator):
 
     def predict(self, x, y):
         return self.knn.predict(np.column_stack((x, y)))
+
+
+class GaussianRunningAvg(CloudinessCalculator):
+    def __init__(self, radius, **kwargs):
+        self.radius = radius
+
+    def fit(self, x, y, fit_results, weights=None):
+        self.fit_results = fit_results
+        self.pos_train = np.column_stack((x, y))
+        if weights is None:
+            self.weights = np.ones(len(fit_results))
+        else:
+            self.weights = weights
+
+    def predict(self, x, y):
+        pos = np.column_stack((x, y))
+        d = distance_matrix(self.pos_train, pos)
+        w = np.exp(-d ** 2 / (2.0 * self.radius ** 2))
+        norm = np.sum(self.weights.reshape(-1,1) * w, axis=0).reshape(1,-1)
+        return np.sum(w * (self.weights * self.fit_results).reshape(-1,1), axis=0) / norm
 
 
 class RunningAvg(CloudinessCalculator):

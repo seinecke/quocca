@@ -1,3 +1,3 @@
-from .cloudiness import KNNMedian, RunningAvg, cloud_map
+from .cloudiness import KNNMedian, RunningAvg, GaussianRunningAvg, cloud_map
 
-__all__ = ['KNNMedian', 'RunningAvg', 'cloud_map']
+__all__ = ['KNNMedian', 'RunningAvg', 'cloud_map', 'GaussianRunningAvg']
