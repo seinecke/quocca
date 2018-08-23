@@ -140,7 +140,7 @@ def add_circle(posx, posy, mag, max_mag=20.0, size=30, color='#7ac143', ax=None)
 def compare_used_stars_to_catalog(img, res, max_mag=3.0):
 
     color_catalog = '#7ac143'
-    color_used_stars = 'mediumblue'
+    color_used_stars = 'royalblue'
 
     ax = img.show()
     ax = add_circle(img.star_pos[:,1], img.star_pos[:,0], img.star_mag, 
@@ -162,13 +162,14 @@ def compare_used_stars_to_catalog(img, res, max_mag=3.0):
 def compare_fitted_to_true_positions(img, res, max_mag=3.0):
 
     color_fitted = 'darkorange'
-    color_true = 'mediumblue'
+    color_true = 'royalblue'
 
     ax = img.show()
-    ax = add_circle(res.y_fit, res.x_fit, res.v_mag, ax=ax, max_mag=max_mag, 
-                    color=color_fitted, size=20)
     ax = add_circle(res.y, res.x, res.v_mag, ax=ax, max_mag=max_mag, 
                     color=color_true, size=60)
+    ax = add_circle(res.y_fit, res.x_fit, res.v_mag, ax=ax, max_mag=max_mag, 
+                    color=color_fitted, size=20)
+
 
     ax.text(0.99, 0.99, 'Fitted', color=color_fitted,
              horizontalalignment='right', verticalalignment='top',
@@ -183,7 +184,7 @@ def compare_fitted_to_true_positions(img, res, max_mag=3.0):
 def compare_estimated_to_true_magnitude(res, det, ax=None):
 
     if ax is None:
-        fig, ax = plt.subplots(figsize=(6, 5))
+        fig, ax = plt.subplots(figsize=(8, 5))
 
     lowx = res.v_mag.min()
     upx = res.v_mag.max()
@@ -252,41 +253,33 @@ def skymap_visibility(img, res, max_mag=5.0):
     color1 = 'red'
     color2 = 'yellow'
     color3 = 'lime'
-    color4 = 'darkgreen'
 
     ax = img.show()
 
-    mask = res.visibility < 0.5
+    mask = res.visibility < 0.4
     ax = add_circle(res.y_fit[mask], res.x_fit[mask], res.v_mag[mask], 
                     ax=ax, max_mag=max_mag, 
                     color=color1, size=20)
-    ax.text(0.99, 0.99, 'Visibility < 0.5', color=color1,
+    ax.text(0.99, 0.99, 'Visibility < 0.4', color=color1,
              horizontalalignment='right', verticalalignment='top',
              transform=ax.transAxes)
 
-    mask = (res.visibility > 0.5) & (res.visibility < 1)
+    mask = (res.visibility > 0.4) & (res.visibility < 0.9)
     ax = add_circle(res.y_fit[mask], res.x_fit[mask], res.v_mag[mask], 
                     ax=ax, max_mag=max_mag, 
                     color=color2, size=20)
-    ax.text(0.99, 0.97, '0.5 < Visibility < 1.0', color=color2,
+    ax.text(0.99, 0.97, '0.4 < Visibility < 0.9', color=color2,
              horizontalalignment='right', verticalalignment='top',
              transform=ax.transAxes)
 
-    mask = (res.visibility > 1) & (res.visibility < 1.5)
+    mask = (res.visibility > 0.9)
     ax = add_circle(res.y_fit[mask], res.x_fit[mask], res.v_mag[mask], 
                     ax=ax, max_mag=max_mag, 
                     color=color3, size=20)
-    ax.text(0.99, 0.95, '1.0 < Visibility < 1.5', color=color3,
+    ax.text(0.99, 0.95, '0.9 < Visibility', color=color3,
              horizontalalignment='right', verticalalignment='top',
              transform=ax.transAxes)
 
-    mask = (res.visibility > 1.5)
-    ax = add_circle(res.y_fit[mask], res.x_fit[mask], res.v_mag[mask], 
-                    ax=ax, max_mag=max_mag, 
-                    color=color4, size=20)
-    ax.text(0.99, 0.93, '1.5 < Visibility', color=color4,
-             horizontalalignment='right', verticalalignment='top',
-             transform=ax.transAxes)
 
     return ax
 
