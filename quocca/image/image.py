@@ -5,15 +5,20 @@ Images.
 2018"""
 
 import numpy as np
+
 from astropy import units as u
 from astropy.time import Time
 from astropy.io import fits
+
 import scipy.io as sio
+
 from matplotlib import pyplot as plt
 from matplotlib.patches import Circle
 from matplotlib.collections import PatchCollection
 from matplotlib.colors import LogNorm
+
 from skimage.filters import gaussian
+
 from ..plotting import show_img
 
 
@@ -84,6 +89,11 @@ class Image:
         self.mask = camera.check_mask(*self.star_pos.T) == 1
         self.star_pos = np.array(self.star_pos[self.mask, :])
         self.star_mag = np.array(self.star_mag[self.mask])
+
+    def __repr__(self):
+        self.show()
+        return "All Sky Camera Image by '{}' on {}.".format(self.camera.name,
+                                                            self.time)
 
     def show(self, **kwargs):
         """Convenience wrapper for quocca.plotting.show_img.
