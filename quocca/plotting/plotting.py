@@ -9,8 +9,11 @@ import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib.patches import Circle
 from matplotlib.colors import LogNorm
+from matplotlib.colors import ListedColormap
 
 from astropy import units as u
+
+from skimage.transform import resize
 
 
 def show_img(img, ax=None, upper=99.8, alt_circles=[30, 60]):
@@ -121,12 +124,38 @@ def show_img(img, ax=None, upper=99.8, alt_circles=[30, 60]):
     larger_frame_y_hi = img.camera.resolution['y'] * 1.06
     larger_frame_y_lo = -img.camera.resolution['y'] * 0.06
     ax.set_xlim([larger_frame_x_lo, larger_frame_x_hi])
-    ax.set_ylim([larger_frame_y_lo, larger_frame_y_hi])
+    ax.set_ylim([larger_frame_y_hi, larger_frame_y_lo])
     return ax
 
 
-def add_circle(posx, posy, mag, max_mag=20.0, size=30, color='#7ac143', ax=None):
+def show_clouds(img, cloudmap, ax=None, color='#7ac143', opaque=False,
+                **kwargs):
+    cmap = plt.cm.rainbow
+    my_cmap = cmap(np.arange(cmap.N))
+    my_cmap[:,-1] = np.linspace(0, 1, cmap.N)
+    my_cmap = ListedColormap(my_cmap)
     
+    cloudmap_fit = resize(cloudmap, (img.camera.resolution['x'],
+                                     img.camera.resolution['y']))
+    tx = np.arange(img.camera.resolution['x'])
+    ty = np.arange(img.camera.resolution['y'])
+    mx, my = np.meshgrid(tx, ty)
+    cloudmap_fit[img.camera.mask((mx, my)) == 0] = 0.0
+    if ax is None:
+        fig, ax = plt.subplots(figsize=(12, 12))
+    if opaque:
+        cloudmap_fit[cloudmap_fit == 0.0] = np.nan
+        ax.contourf(tx, ty, 1.0 - (cloudmap_fit).T, cmap=my_cmap,
+                    levels=np.linspace(0.0, 1.0, 20))
+    else:
+        ax.contour(tx, ty, (cloudmap_fit).T, colors=color,
+                   linestyles=['-', '--', ':'],
+                   levels=[0.25, 0.5, 0.75])
+    return ax
+
+
+def add_circle(posx, posy, mag, max_mag=20.0, size=30, color='#7ac143',
+               ax=None):
     if ax is None:
         fig, ax = plt.subplots(figsize=(12, 12))
         
@@ -138,7 +167,6 @@ def add_circle(posx, posy, mag, max_mag=20.0, size=30, color='#7ac143', ax=None)
 
 
 def compare_used_stars_to_catalog(img, res, max_mag=3.0):
-
     color_catalog = '#7ac143'
     color_used_stars = 'royalblue'
 
@@ -160,7 +188,6 @@ def compare_used_stars_to_catalog(img, res, max_mag=3.0):
 
 
 def compare_fitted_to_true_positions(img, res, max_mag=3.0):
-
     color_fitted = 'darkorange'
     color_true = 'royalblue'
 
@@ -182,7 +209,6 @@ def compare_fitted_to_true_positions(img, res, max_mag=3.0):
 
 
 def compare_estimated_to_true_magnitude(res, det, ax=None):
-
     if ax is None:
         fig, ax = plt.subplots(figsize=(8, 5))
 
@@ -212,7 +238,6 @@ def compare_estimated_to_true_magnitude(res, det, ax=None):
 
 
 def compare_visibility_to_magnitude(res, ax=None):
-
     if ax is None:
         fig, ax = plt.subplots(figsize=(8, 5))
 
@@ -233,7 +258,6 @@ def compare_visibility_to_magnitude(res, ax=None):
 
 
 def plot_visibility(vis, color='#7ac143', label='', ax=None):
-
     if ax is None:
         fig, ax = plt.subplots(figsize=(8, 5))
 
@@ -249,7 +273,6 @@ def plot_visibility(vis, color='#7ac143', label='', ax=None):
 
 
 def skymap_visibility(img, res, max_mag=5.0):
-
     color1 = 'red'
     color2 = 'yellow'
     color3 = 'lime'
@@ -282,6 +305,3 @@ def skymap_visibility(img, res, max_mag=5.0):
 
 
     return ax
-
-
-

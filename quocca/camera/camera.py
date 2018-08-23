@@ -36,9 +36,22 @@ class Camera:
     of cameras requires editing that config manually.
     """
 
+    # Loading config and listing supported camera types.
     with open(resource_filename('quocca', 'resources/cameras.yaml')) as file:
         __config__ = yaml.safe_load(file)
         __supported_cameras__ = list(__config__.keys())
+    
+    # List of attributes required for a Camera to be viable.
+    __required_attributes__ = [
+        'az_offset',
+        'location',
+        'mapping',
+        'max_val',
+        'radius',
+        'resolution',
+        'timestamps',
+        'zenith'
+    ]
     
     def __init__(self, name):
         """Constructor. Camera-specific settings are specified.
@@ -54,16 +67,28 @@ class Camera:
             raise NotImplementedError('Unsupported Camera {}'.format(name))
         else:
             self.name = name
+            # Class attributes are updated with all keys available in the
+            # Config file.
             self.__dict__.update(**self.__config__[name])
+
+            # Location and offset are converted to a astropy quantity.
             self.location = EarthLocation(**self.location)
             self.az_offset = Angle(self.az_offset * u.deg)
-            mask_path = resource_filename('quocca', self.mask)
-            mask = np.array(imread(mask_path)) != 0
+            try:
+                mask_path = resource_filename('quocca', self.mask)
+                mask = np.array(imread(mask_path)) != 0
+            except:
+                mask = np.ones((self.resolution['x'], self.resolution['y']))
             tx = np.arange(mask.shape[0])
             ty = np.arange(mask.shape[1])
             self.mask = RegularGridInterpolator((tx, ty), mask,
                                                 bounds_error=False,
                                                 method='nearest')
+            # Checking for any missing obligatory attributes.
+            for attribute in self.__required_attributes__:
+                if attribute not in list(self.__dict__.keys()):
+                    raise KeyError('{} attribute missing in configuration.'
+                                   .format(attribute))
     
     def __str__(self):
         return 'Camera {}'.format(self.name)
@@ -110,6 +135,9 @@ class Camera:
             return r * (np.pi * u.rad) / (2.0 * self.radius)
         elif self.mapping == 'nonlin':
             return 2.0 * np.arcsin(np.sqrt(2.0) * r / self.radius)
+        else:
+            raise NotImplementedError('Unsupported Mapping {}'
+                                      .format(self.mapping))
         
     def check_mask(self, x, y):
         """Checks whether or not if a point is within the bounds of the mask provided. True
