@@ -9,8 +9,10 @@ import numpy as np
 from astropy import units as u
 from astropy.time import Time
 from astropy.io import fits
+from astropy.coordinates import get_body, AltAz
 
 import scipy.io as sio
+from scipy.spatial import distance_matrix
 
 from matplotlib import pyplot as plt
 from matplotlib.patches import Circle
@@ -60,7 +62,7 @@ class Image:
 
         if suffix == 'fits' or suffix == 'gz':
             with fits.open(path) as f:
-                image = f[0].dataa
+                image = f[0].data
                 for timestamp in camera.timestamps:
                     try:
                         timestamp = f[0].header[timestamp]
@@ -92,8 +94,37 @@ class Image:
 
     def __repr__(self):
         self.show()
+        plt.show()
         return "All Sky Camera Image by '{}' on {}.".format(self.camera.name,
                                                             self.time)
+
+    def rm_celestial_bodies(self, radius=10.0, bodies=['moon', 'venus', 'mars',
+                                                       'mercury', 'jupiter',
+                                                       'saturn']):
+        """Removes stars in the vicinity of bright celestial bodies from the
+        image.
+
+        Parameters
+        ----------
+        radius : float
+            Radius in pixels
+        bodies : list(str)
+            List of names of celestial bodies. For allowed values see
+            astropy.coordinates.get_body.
+        """
+        altaz_cs = AltAz(obstime=self.time, location=self.camera.location)
+        objects = [
+            get_body(p, self.time, self.camera.location).transform_to(altaz_cs)
+            for p in bodies
+        ]
+        px_pos = np.array([
+            np.array(self.camera.__project_stars__(p.az, p.alt))
+            for p in objects
+        ])
+        D = distance_matrix(self.star_pos, px_pos)
+        choice = np.all(D > radius, axis=1)
+        self.star_pos = self.star_pos[choice, :]
+        self.star_mag = self.star_mag[choice]
 
     def show(self, **kwargs):
         """Convenience wrapper for quocca.plotting.show_img.
