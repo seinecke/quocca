@@ -86,11 +86,12 @@ class Image:
         self.image = np.clip(image / camera.max_val, 0.0, 1.0)
         self.time = time
         self.camera = camera
-        self.star_pos, self.star_mag = self.camera.project_stars(catalog,
+        self.star_pos, self.star_mag, self.star_id = self.camera.project_stars(catalog,
                                                                  self.time)
         self.mask = camera.check_mask(*self.star_pos.T) == 1
         self.star_pos = np.array(self.star_pos[self.mask, :])
         self.star_mag = np.array(self.star_mag[self.mask])
+        self.star_id = np.array(self.star_id[self.mask])
 
     def __repr__(self):
         self.show()

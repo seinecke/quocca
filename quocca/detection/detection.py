@@ -271,6 +271,7 @@ class StarDetectionLLH(StarDetectionBase):
         n_stars = len(image.star_pos[mask])
         pos = image.star_pos[mask]
         keys = [
+            'id',
             'M_fit',
             'b_fit',
             'x_fit',
@@ -306,6 +307,7 @@ class StarDetectionLLH(StarDetectionBase):
                 img[sel] -= self.blob_func(mx[sel], my[sel], r.x[2], r.x[3],
                                            r.x[0], self.sigma, 0.0)
             visibility = np.abs(r.x[0]) / np.exp(-image.star_mag[mask][idx])
+            results['id'][idx] = image.star_id[mask][idx]
             results['M_fit'][idx] = np.abs(r.x[0])
             results['visibility'][idx] = visibility * self.calibration
             results['b_fit'][idx] = np.abs(r.x[1])

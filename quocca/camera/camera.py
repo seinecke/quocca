@@ -182,6 +182,8 @@ class Camera:
             Magnitude of each star.
         """
         altaz = catalog.get_horizontal(self, time)
-        row, col = self.__project_stars__(altaz.az, altaz.alt)
-        return np.column_stack((row, col)), catalog['v_mag']
-        
+        phi, theta = altaz.az, altaz.alt
+        r = self.theta2r(Angle('90d') - theta)
+        row = -r * np.sin(phi + self.az_offset) + self.zenith['x']
+        col = r * np.cos(phi + self.az_offset) + self.zenith['y']
+        return np.column_stack((row, col)), catalog['v_mag'], catalog['HIP']        
