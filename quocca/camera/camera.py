@@ -158,6 +158,12 @@ class Camera:
         """
         return self.mask((x, y)) == 1
         
+    def __project_stars__(self, phi, theta):
+        r = self.theta2r(Angle('90d') - theta)
+        row = -r * np.sin(phi + self.az_offset) + self.zenith['x']
+        col = r * np.cos(phi + self.az_offset) + self.zenith['y']
+        return row, col
+
     def project_stars(self, catalog, time):
         """Projects stars listed in `catalog` onto the camera at `time`.
         
@@ -176,9 +182,6 @@ class Camera:
             Magnitude of each star.
         """
         altaz = catalog.get_horizontal(self, time)
-        phi, theta = altaz.az, altaz.alt
-        r = self.theta2r(Angle('90d') - theta)
-        row = -r * np.sin(phi + self.az_offset) + self.zenith['x']
-        col = r * np.cos(phi + self.az_offset) + self.zenith['y']
+        row, col = self.__project_stars__(altaz.az, altaz.alt)
         return np.column_stack((row, col)), catalog['v_mag']
         
