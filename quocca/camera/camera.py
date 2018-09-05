@@ -78,7 +78,7 @@ class Camera:
                 mask_path = resource_filename('quocca', self.mask)
                 mask = np.array(imread(mask_path)) != 0
             except:
-                mask = np.ones((self.resolution['x'], self.resolution['y']))
+                mask = np.ones((self.resolution['y'], self.resolution['x']))
             tx = np.arange(mask.shape[0])
             ty = np.arange(mask.shape[1])
             self.mask = RegularGridInterpolator((tx, ty), mask,
@@ -184,6 +184,6 @@ class Camera:
         altaz = catalog.get_horizontal(self, time)
         phi, theta = altaz.az, altaz.alt
         r = self.theta2r(Angle('90d') - theta)
-        row = -r * np.sin(phi + self.az_offset) + self.zenith['x']
-        col = r * np.cos(phi + self.az_offset) + self.zenith['y']
+        row = -r * np.sin(phi + self.az_offset) + self.zenith['y']
+        col = r * np.cos(phi + self.az_offset) + self.zenith['x']
         return np.column_stack((row, col)), catalog['v_mag'], catalog['HIP']        

@@ -66,6 +66,7 @@ def show_img(img, ax=None, upper=99.8, alt_circles=[30, 60]):
     phi = np.deg2rad(img.camera.az_offset.to_value())
     x0 = img.camera.zenith['x']
     y0 = img.camera.zenith['y']
+    pos0 = np.array([x0, y0])
     dir_ax1 = np.array([np.cos(phi), np.sin(phi)])
     dir_ax2 = np.array([-np.sin(phi), np.cos(phi)])
     alt_circles.append(90)
@@ -80,26 +81,26 @@ def show_img(img, ax=None, upper=99.8, alt_circles=[30, 60]):
     rot_angle = rot_angles[np.argwhere((rot_angles > -45) & (rot_angles < 45))[0]][0]
     
     for angle in alt_circles:
-        pos = x0 + dir_ax1 * (img.camera.theta2r(angle * u.deg))
+        pos = pos0 + dir_ax1 * (img.camera.theta2r(angle * u.deg))
         ax.text(pos[0], pos[1], u' {}˚'.format(angle), rotation=rot_angle,
                 **alt_label_style)
-        pos = x0 + dir_ax2 * (img.camera.theta2r(angle * u.deg))
+        pos = pos0 + dir_ax2 * (img.camera.theta2r(angle * u.deg))
         ax.text(pos[0], pos[1], u' {}˚'.format(angle), rotation=rot_angle,
                 **alt_label_style)
-        pos = x0 - dir_ax1 * (img.camera.theta2r(angle * u.deg))
+        pos = pos0 - dir_ax1 * (img.camera.theta2r(angle * u.deg))
         ax.text(pos[0], pos[1], u' {}˚'.format(angle), rotation=rot_angle,
                 **alt_label_style)
-        pos = x0 - dir_ax2 * (img.camera.theta2r(angle * u.deg))
+        pos = pos0 - dir_ax2 * (img.camera.theta2r(angle * u.deg))
         ax.text(pos[0], pos[1], u' {}˚'.format(angle), rotation=rot_angle,
                 **alt_label_style)
     
-    pos = x0 + dir_ax1 * (img.camera.theta2r(98 * u.deg))
+    pos = pos0 + dir_ax1 * (img.camera.theta2r(98 * u.deg))
     ax.text(pos[0], pos[1], 'W', rotation=rot_angle, **card_label_style)
-    pos = x0 + dir_ax2 * (img.camera.theta2r(98 * u.deg))
+    pos = pos0 + dir_ax2 * (img.camera.theta2r(98 * u.deg))
     ax.text(pos[0], pos[1], 'S', rotation=rot_angle, **card_label_style)
-    pos = x0 - dir_ax1 * (img.camera.theta2r(98 * u.deg))
+    pos = pos0 - dir_ax1 * (img.camera.theta2r(98 * u.deg))
     ax.text(pos[0], pos[1], 'E', rotation=rot_angle, **card_label_style)
-    pos = x0 - dir_ax2 * (img.camera.theta2r(98 * u.deg))
+    pos = pos0 - dir_ax2 * (img.camera.theta2r(98 * u.deg))
     ax.text(pos[0], pos[1], 'N', rotation=rot_angle, **card_label_style)
     
     ax.plot([-1.01 * r * np.cos(phi) + x0, 1.01 * r * np.cos(phi) + x0],

@@ -200,10 +200,10 @@ class StarDetectionLLH(StarDetectionBase):
 
     def get_slice(self, pos, shape):
         pos = list(np.round(pos).astype(int))
-        a_min = np.clip(pos[1] - self.size[1], 0, shape[1] - 1)
-        a_max = np.clip(pos[1] + self.size[1] + 1, 0, shape[1] - 1)
-        b_min = np.clip(pos[0] - self.size[0], 0, shape[0] - 1)
-        b_max = np.clip(pos[0] + self.size[0] + 1, 0, shape[0] - 1)
+        a_min = np.clip(pos[1] - self.size[1], 0, shape[0] - 1)
+        a_max = np.clip(pos[1] + self.size[1] + 1, 0, shape[0] - 1)
+        b_min = np.clip(pos[0] - self.size[0], 0, shape[1] - 1)
+        b_max = np.clip(pos[0] + self.size[0] + 1, 0, shape[1] - 1)
         return (slice(a_min, a_max, None),
                 slice(b_min, b_max, None))
     
@@ -259,7 +259,7 @@ class StarDetectionLLH(StarDetectionBase):
         img = gaussian(image.image, self.presmoothing)
         tx = np.arange(img.shape[0])
         ty = np.arange(img.shape[1])
-        mx, my = np.meshgrid(tx, ty)
+        mx, my = np.meshgrid(ty, tx)
         mask_nearby = nearby_stars(image.star_pos[:,0],
                                    image.star_pos[:,1],
                                    image.star_mag, min_dist)

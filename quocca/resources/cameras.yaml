@@ -1,8 +1,9 @@
 cta:
   az_offset: 87.30484980650667
   llh_star_detection:
-    '1970-01-01T00:00:01.000': 1.9695112091162574
-    '2015-12-15T00:00:01.000': 0.6438040685676666
+    '1970-01-01T00:00:01.000': 1.9690027914483894
+    '2015-12-19T00:00:01.000': 0.6438040685676666
+    '2015-12-20T00:00:01.000': 0.6438040685676666
   location:
     height: 2200.0
     lat: 28.7618172
@@ -23,3 +24,25 @@ cta:
   zenith:
     x: 848.8933456349624
     y: 848.573790060579
+
+iceact:
+  az_offset: 3.0
+  location:
+    height: 2801.0
+    lat: -89.99
+    lon: -63.45
+  mapping: lin
+  mask: resources/iceact_mask.png
+  max_val: 65536
+  radius: 304.5
+  resolution:
+    x: 640
+    y: 480
+  size:
+    x: 1000
+    y: 1000
+  timestamps:
+  - DATE-OBS
+  zenith:
+    x: 326.3
+    y: 250
