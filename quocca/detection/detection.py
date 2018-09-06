@@ -209,7 +209,7 @@ class StarDetectionLLH(StarDetectionBase):
     
     def blob_func(self, x, y, x0, y0, mag, sigma, bkg):
         arg = -((x - x0) ** 2 + (y - y0) ** 2) / (2.0 * sigma ** 2)
-        return np.clip(np.abs(mag) * np.exp(arg) + np.abs(bkg), 0.0, 1.0)
+        return np.abs(mag) * np.exp(arg) + np.abs(bkg)
 
     """def blob_func(self, x, y, x0, y0, mag, sx, sy, rho, bkg):
         x_ = x - x0
@@ -330,13 +330,13 @@ class StarDetectionFilter(StarDetectionBase):
     
     def get_slice(self, pos, shape):
         pos = list(np.round(pos).astype(int))
-        a_min = np.clip(pos[1] - self.size[1], 0, shape[1] - 1)
-        a_max = np.clip(pos[1] + self.size[1] + 1, 0, shape[1] - 1)
-        b_min = np.clip(pos[0] - self.size[0], 0, shape[0] - 1)
-        b_max = np.clip(pos[0] + self.size[0] + 1, 0, shape[0] - 1)
+        a_min = np.clip(pos[1] - self.size[1], 0, shape[0] - 1)
+        a_max = np.clip(pos[1] + self.size[1] + 1, 0, shape[0] - 1)
+        b_min = np.clip(pos[0] - self.size[0], 0, shape[1] - 1)
+        b_max = np.clip(pos[0] + self.size[0] + 1, 0, shape[1] - 1)
         return (slice(a_min, a_max, None),
                 slice(b_min, b_max, None))
-
+    
     def detect(self, image, max_mag=5.5, min_dist=6.0, verbose=True):
         super(StarDetectionFilter, self).detect(image)
         img = laplacian_gaussian_filter(image.image, self.sigma)
@@ -352,7 +352,7 @@ class StarDetectionFilter(StarDetectionBase):
         pos = image.star_pos[mask]
         results = {
             key: np.zeros(n_stars)
-            for key in ['M_fit', 'v_mag', 'x', 'y', 'visibility']
+            for key in ['id', 'M_fit', 'v_mag', 'x', 'y', 'visibility']
         }
         if verbose:
             iterator = tqdm(range(n_stars))
@@ -365,10 +365,9 @@ class StarDetectionFilter(StarDetectionBase):
             
             M = np.percentile(img[sel], self.quantile)
 
+            results['id'][idx] = image.star_id[mask][idx]
             results['M_fit'][idx] = M
             visibility = M / np.exp(-image.star_mag[mask][idx])
-            #results['visibility'][idx] = np.clip(visibility * self.calibration,
-            #                                     0.0, 1.0)
             results['visibility'][idx] = visibility * self.calibration
             results['v_mag'][idx] = image.star_mag[mask][idx]
             results['x'][idx] = image.star_pos[mask, 0][idx]
