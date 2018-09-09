@@ -340,7 +340,6 @@ class StarDetectionFilter(StarDetectionBase):
     def detect(self, image, max_mag=5.5, min_dist=6.0, verbose=True):
         super(StarDetectionFilter, self).detect(image)
         img = laplacian_gaussian_filter(image.image, self.sigma)
-        print(img)
 
         tx = np.arange(img.shape[0])
         ty = np.arange(img.shape[1])
