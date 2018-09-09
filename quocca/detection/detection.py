@@ -330,10 +330,10 @@ class StarDetectionFilter(StarDetectionBase):
     
     def get_slice(self, pos, shape):
         pos = list(np.round(pos).astype(int))
-        a_min = np.clip(pos[1] - self.size[1], 0, shape[1] - 1)
-        a_max = np.clip(pos[1] + self.size[1] + 1, 0, shape[1] - 1)
-        b_min = np.clip(pos[0] - self.size[0], 0, shape[0] - 1)
-        b_max = np.clip(pos[0] + self.size[0] + 1, 0, shape[0] - 1)
+        a_min = np.clip(pos[1] - self.size[1], 0, shape[0] - 1)
+        a_max = np.clip(pos[1] + self.size[1] + 1, 0, shape[0] - 1)
+        b_min = np.clip(pos[0] - self.size[0], 0, shape[1] - 1)
+        b_max = np.clip(pos[0] + self.size[0] + 1, 0, shape[1] - 1)
         return (slice(a_min, a_max, None),
                 slice(b_min, b_max, None))
 
@@ -367,8 +367,6 @@ class StarDetectionFilter(StarDetectionBase):
 
             results['M_fit'][idx] = M
             visibility = M / np.exp(-image.star_mag[mask][idx])
-            #results['visibility'][idx] = np.clip(visibility * self.calibration,
-            #                                     0.0, 1.0)
             results['visibility'][idx] = visibility * self.calibration
             results['v_mag'][idx] = image.star_mag[mask][idx]
             results['x'][idx] = image.star_pos[mask, 0][idx]

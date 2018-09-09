@@ -120,12 +120,15 @@ def show_img(img, ax=None, upper=99.8, alt_circles=[30, 60]):
     ax.set_facecolor('k')
 
     # Inserts image into a larger paspartout
-    larger_frame_x_hi = img.camera.resolution['x'] * 1.06
-    larger_frame_x_lo = -img.camera.resolution['x'] * 0.06
-    larger_frame_y_hi = img.camera.resolution['y'] * 1.06
-    larger_frame_y_lo = -img.camera.resolution['y'] * 0.06
+    frame_size = np.max([img.camera.resolution['x'],
+                         img.camera.resolution['y']])
+    larger_frame_x_hi = x0 + frame_size * 0.53
+    larger_frame_x_lo = x0 - frame_size * 0.53
+    larger_frame_y_hi = y0 + frame_size * 0.53
+    larger_frame_y_lo = y0 - frame_size * 0.53
+    
     ax.set_xlim([larger_frame_x_lo, larger_frame_x_hi])
-    ax.set_ylim([larger_frame_y_hi, larger_frame_y_lo])
+    ax.set_ylim([larger_frame_y_lo, larger_frame_y_hi])
     return ax
 
 
