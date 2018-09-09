@@ -24,9 +24,10 @@ cta:
   zenith:
     x: 848.8933456349624
     y: 848.573790060579
-
 iceact:
   az_offset: 3.0
+  llh_star_detection:
+    '1970-01-01T00:00:01.000': 1.6435556440974668
   location:
     height: 2801.0
     lat: -89.99
