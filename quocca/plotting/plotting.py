@@ -78,7 +78,8 @@ def show_img(img, ax=None, upper=99.8, alt_circles=[30, 60]):
     circles[-1].set_linestyle('-')
     rot_angles = np.array([-np.rad2deg(phi) + a
                            for a in [-270, -180, -90, 0, 90, 180, 270]]) 
-    rot_angle = rot_angles[np.argwhere((rot_angles > -45) & (rot_angles < 45))[0]][0]
+    rot_angle = rot_angles[np.argwhere((rot_angles > -45)
+                                       & (rot_angles < 45))[0]][0]
     
     for angle in alt_circles:
         pos = pos0 + dir_ax1 * (img.camera.theta2r(angle * u.deg))
@@ -175,7 +176,7 @@ def compare_used_stars_to_catalog(img, res, max_mag=3.0):
     color_used_stars = 'royalblue'
 
     ax = img.show()
-    ax = add_circle(img.star_pos[:,1], img.star_pos[:,0], img.star_mag, 
+    ax = add_circle(img.stars.y, img.stars.x, img.stars.mag, 
                     ax=ax, max_mag=max_mag, 
                     color=color_catalog, size=20)
     ax = add_circle(res.y, res.x, res.v_mag, ax=ax, max_mag=max_mag, 
@@ -187,7 +188,6 @@ def compare_used_stars_to_catalog(img, res, max_mag=3.0):
     ax.text(0.99, 0.99, '\nUsed Stars', color=color_used_stars,
              horizontalalignment='right', verticalalignment='top',
              transform=ax.transAxes)
-
     return ax
 
 
@@ -208,7 +208,6 @@ def compare_fitted_to_true_positions(img, res, max_mag=3.0):
     ax.text(0.99, 0.99, '\nTrue', color=color_true,
              horizontalalignment='right', verticalalignment='top',
              transform=ax.transAxes)
-
     return ax
 
 
@@ -306,6 +305,4 @@ def skymap_visibility(img, res, max_mag=5.0):
     ax.text(0.99, 0.95, '0.9 < Visibility', color=color3,
              horizontalalignment='right', verticalalignment='top',
              transform=ax.transAxes)
-
-
     return ax

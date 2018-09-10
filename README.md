@@ -12,16 +12,12 @@ To process an image, objects of the classes `Camera`, `Catalog` and `Image` are 
 
 ```python
 from quocca.camera import Camera
-from quocca.catalog import Catalog
-from quocca.image import Image
-from quocca.detection import StarDetectionFilter
 
 
-cat = Catalog('hipparcos')
 cam = Camera('cta')
-img = Image('test.mat', cam, cat)
-det = StarDetectionFilter(cam, sigma=1.7, fit_size=8)
-result = det.detect(img, max_mag=20.0, min_dist=16)
+cam.add_catalog('hipparcos', max_mag=5.5, min_dist=12.0)
+img = cam.read('path/to/test.mat')
+img.detect('llh', sigma=1.7, fit_size=8)
 ``` 
 ### Calibrating Camera Parameters
 
