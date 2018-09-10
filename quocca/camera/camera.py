@@ -14,6 +14,8 @@ from scipy.interpolate import RegularGridInterpolator
 from astropy import units as u
 from astropy.coordinates import Angle, EarthLocation
 
+from ..image import Image
+
 
 class Camera:
     """Camera class, contains parameters specific to a camera.
@@ -92,6 +94,23 @@ class Camera:
     
     def __str__(self):
         return 'Camera {}'.format(self.name)
+
+
+    def read(self, filename):
+        """Reads an image corresponding to camera defined in the object.
+
+        Parameters
+        ----------
+        filename : str
+            Path to image file.
+
+        Returns
+        -------
+        img : quocca.image.Image object
+            Image.
+        """
+        return Image(filename, self)
+
     
     def theta2r(self, theta):
         """Converts an altitude `theta` into a apparent radius in pixels. Used
