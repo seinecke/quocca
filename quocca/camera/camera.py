@@ -226,7 +226,7 @@ class Camera:
         altaz = catalog.get_horizontal(self, time)
         phi, theta = altaz.az, altaz.alt
         r = self.theta2r(Angle('90d') - theta)
-        pxl = rphi2pxl(r, phi, self.az_offset, self.zenith['y'], self.zenith['x'])
+        pxl = rphi2pxl(r, phi, self.az_offset, self.zenith['x'], self.zenith['y'])
         return pxl, catalog.mag, catalog.id
 
     def calibrate(self, img, method, time=0, update=True, kwargs_catalog={}, kwargs_method={}):
