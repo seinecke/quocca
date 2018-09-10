@@ -339,6 +339,7 @@ class StarDetectionFilter(StarDetectionBase):
     
     def detect(self, image, max_mag=5.5, min_dist=6.0, verbose=True):
         super(StarDetectionFilter, self).detect(image)
+        from matplotlib import pyplot as plt
         img = laplacian_gaussian_filter(image.image, self.sigma)
 
         tx = np.arange(img.shape[0])
@@ -363,7 +364,6 @@ class StarDetectionFilter(StarDetectionBase):
             sel = self.get_slice((pos[idx,1],
                                   pos[idx,0]),
                                  img.shape)
-            
             M = np.percentile(img[sel], self.quantile)
 
             results['id'][idx] = image.star_id[mask][idx]
