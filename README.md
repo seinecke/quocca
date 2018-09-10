@@ -15,10 +15,13 @@ from quocca.camera import Camera
 
 
 cam = Camera('cta')
-cam.add_catalog('hipparcos', max_mag=5.5, min_dist=12.0)
 img = cam.read('path/to/test.mat')
-img.detect('llh', sigma=1.7, fit_size=8)
+img.add_catalog('hipparcos', max_mag=5.5, min_dist=12.0)
+results = img.detect('llh', sigma=1.7, fit_size=8)
 ``` 
+
+`results` is then a pandas DataFrame containing the results of the detection in the attribute `visibility`.
+
 ### Calibrating Camera Parameters
 
 Calibrating a camera is necessary for multiple reasons, namely

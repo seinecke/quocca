@@ -15,6 +15,29 @@ from astropy import units as u
 from astropy.coordinates import Angle, EarthLocation
 
 from ..image import Image
+from ..utilities import calibrate_method
+
+
+def r2theta_lin(r, radius):
+    return r * (np.pi * u.rad) / (2.0 * radius)
+
+
+def r2theta_nonlin(r, radius):
+    return 2.0 * np.arcsin(np.sqrt(2.0) * r / radius)
+
+
+def theta2r_lin(theta, radius):
+    return radius / (np.pi * u.rad / 2.0) * theta.to(u.rad)
+
+
+def theta2r_nonlin(theta, radius):
+    return np.sqrt(2.0) * radius * np.sin(theta.to(u.rad) / 2.0)
+
+
+def rphi2pxl(r, phi, az_offset, x0, y0):
+    row = -r * np.sin(phi + az_offset) + y0
+    col = r * np.cos(phi + az_offset) + x0
+    return np.column_stack((row, col))
 
 
 class Camera:
@@ -95,7 +118,6 @@ class Camera:
     def __str__(self):
         return 'Camera {}'.format(self.name)
 
-
     def read(self, filename):
         """Reads an image corresponding to camera defined in the object.
 
@@ -128,9 +150,9 @@ class Camera:
             Calculated radius in pixels.
         """
         if self.mapping == 'lin':
-            return self.radius / (np.pi * u.rad / 2.0) * theta.to(u.rad)
+            return theta2r_lin(theta, self.radius)
         elif self.mapping == 'nonlin':
-            return np.sqrt(2.0) * self.radius * np.sin(theta.to(u.rad) / 2.0)
+            return theta2r_nonlin(theta, self.radius)
         else:
             raise NotImplementedError('Unsupported Mapping {}'
                                       .format(self.mapping))
@@ -151,9 +173,9 @@ class Camera:
             Calculated altitude in degrees.
         """
         if self.mapping == 'lin':
-            return r * (np.pi * u.rad) / (2.0 * self.radius)
+            return r2theta_lin(r, self.radius)
         elif self.mapping == 'nonlin':
-            return 2.0 * np.arcsin(np.sqrt(2.0) * r / self.radius)
+            return r2theta_nonlin(r, self.radius)
         else:
             raise NotImplementedError('Unsupported Mapping {}'
                                       .format(self.mapping))
@@ -199,10 +221,29 @@ class Camera:
             Calculated pixel coordinates for each star.
         magnitude : numpy.array
             Magnitude of each star.
+        id : IDs of the projected stars.
         """
         altaz = catalog.get_horizontal(self, time)
         phi, theta = altaz.az, altaz.alt
         r = self.theta2r(Angle('90d') - theta)
-        row = -r * np.sin(phi + self.az_offset) + self.zenith['y']
-        col = r * np.cos(phi + self.az_offset) + self.zenith['x']
-        return np.column_stack((row, col)), catalog['v_mag'], catalog['HIP']        
+        pxl = rphi2pxl(r, phi, self.az_offset, self.zenith['y'], self.zenith['x'])
+        return pxl, catalog.mag, catalog.id
+
+    def calibrate(self, img, method, time=0, update=True, kwargs_catalog={}, kwargs_method={}):
+        """Calibrate a method for this camera.
+
+        Parameters
+        ----------
+        img : str
+            Path to clear calibration image.
+        method : str or quocca.detection.StarDetection object
+            Method to calibrate for
+        time : 0 or astropy.time.Time object
+            Time of the begin of the calibration period.
+        kwargs_method : dict
+            Keyword arguments for method initialisation.
+        kwargs_catalog : dict
+            Keyword arguments for catalog initialisation.
+        """
+        return calibrate_method(img, self, method, time, kwargs_catalog,
+                                kwargs_method, update=update)

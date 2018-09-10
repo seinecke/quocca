@@ -23,6 +23,11 @@ class Catalog(Table):
             raise NotImplementedError('Unsupported Catalog {}'.format(name))
         super(Catalog, self).__init__(Table.read(resource_filename('quocca', self.__config__[name]['file'])))
         self.remove_rows(np.isnan(self['ra']) | np.isnan(self['dec']))
+        self.id = self[self.__config__[name]['id']]
+        self.var = self[self.__config__[name]['var']]
+        self.ra = self[self.__config__[name]['ra']]
+        self.dec = self[self.__config__[name]['dec']]
+        self.mag = self[self.__config__[name]['mag']]
     
     def get_horizontal(self, camera, time):
         """Transforms ra/dec coordinates from catalog into alt-az coordinates.

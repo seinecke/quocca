@@ -1,2 +1,7 @@
 hipparcos:
   file: resources/hipparcos.fits.gz
+  ra: ra
+  dec: dec
+  mag: v_mag
+  var: variability
+  id: HIP
