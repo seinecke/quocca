@@ -142,8 +142,7 @@ class Image:
         """
         if type(catalog) == str:
             catalog = Catalog(catalog)
-        star_pos, star_mag, star_id = self.camera.project_stars(catalog,
-                                                                self.time)
+        star_pos, star_altaz, star_mag, star_id = self.camera.project_stars(catalog, self.time)
         mask_nearby = nearby_stars(star_pos[:,0],
                                    star_pos[:,1],
                                    star_mag, min_dist or 0.0)
@@ -154,6 +153,8 @@ class Image:
         self.stars = pd.DataFrame({'id': star_id[mask].astype(int),
                                    'x': star_pos[mask, 0],
                                    'y': star_pos[mask, 1],
+                                   'alt': np.array(star_altaz.alt)[mask],
+                                   'az': np.array(star_altaz.az)[mask],
                                    'mag': star_mag[mask]},
                                    index=star_id[mask].astype(int))
 

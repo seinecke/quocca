@@ -114,6 +114,15 @@ class Camera:
                 if attribute not in list(self.__dict__.keys()):
                     raise KeyError('{} attribute missing in configuration.'
                                    .format(attribute))
+            if self.mapping == 'lin':
+                self.theta2r_fun = theta2r_lin
+                self.r2theta_fun = r2theta_lin
+            elif self.mapping == 'nonlin':
+                self.theta2r_fun = theta2r_nonlin
+                self.r2theta_fun = r2theta_nonlin
+            else:
+                raise NotImplementedError('Unsupported Mapping {}'
+                                          .format(self.mapping))
     
     def __str__(self):
         return 'Camera {}'.format(self.name)
@@ -149,13 +158,8 @@ class Camera:
         r : numpy.array
             Calculated radius in pixels.
         """
-        if self.mapping == 'lin':
-            return theta2r_lin(theta, self.radius)
-        elif self.mapping == 'nonlin':
-            return theta2r_nonlin(theta, self.radius)
-        else:
-            raise NotImplementedError('Unsupported Mapping {}'
-                                      .format(self.mapping))
+        return self.theta2r_fun(theta, self.radius)
+
         
     def r2theta(self, r):
         """Converts a radius in pixels `r` into an altitude. Used function
@@ -172,13 +176,7 @@ class Camera:
         theta : numpy.array
             Calculated altitude in degrees.
         """
-        if self.mapping == 'lin':
-            return r2theta_lin(r, self.radius)
-        elif self.mapping == 'nonlin':
-            return r2theta_nonlin(r, self.radius)
-        else:
-            raise NotImplementedError('Unsupported Mapping {}'
-                                      .format(self.mapping))
+        return self.r2theta_fun(theta, self.radius)
         
     def check_mask(self, x, y):
         """Checks whether or not if a point is within the bounds of the mask provided. True
@@ -205,6 +203,13 @@ class Camera:
         col = r * np.cos(phi + self.az_offset) + self.zenith['y']
         return row, col
 
+    def __calib_project__(self, phi, theta, az_offset,
+                          zenith_x, zenith_y, radius):
+        r = self.theta2r_fun(Angle('90d') - theta, radius)
+        pxl = rphi2pxl(r, phi, az_offset, zenith_x,
+                       zenith_y)
+        return pxl
+
     def project_stars(self, catalog, time):
         """Projects stars listed in `catalog` onto the camera at `time`.
         
@@ -226,8 +231,9 @@ class Camera:
         altaz = catalog.get_horizontal(self, time)
         phi, theta = altaz.az, altaz.alt
         r = self.theta2r(Angle('90d') - theta)
-        pxl = rphi2pxl(r, phi, self.az_offset, self.zenith['x'], self.zenith['y'])
-        return pxl, catalog.mag, catalog.id
+        pxl = rphi2pxl(r, phi, self.az_offset, self.zenith['x'],
+                       self.zenith['y'])
+        return pxl, altaz, catalog.mag, catalog.id
 
     def calibrate(self, img, method, time=0, update=True, kwargs_catalog={}, kwargs_method={}):
         """Calibrate a method for this camera.

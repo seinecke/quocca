@@ -146,17 +146,16 @@ def fit_camera_params(img_path,
     if init_sigma < 0.1:
         raise ValueError('init_sigma needs to be > 0.1.')
 
-    if verbose: print('Reading in catalog ...')
-    cat = Catalog('hipparcos')
-    if verbose: print('Reading in image ...')
-    img = Image(img_path, cam, cat)
-    if verbose: print('Transforming coordinates ...')
-    altaz = cat.get_horizontal(cam, img.time)
-    altaz = altaz[img.mask][img.star_mag < max_mag]
+    img = cam.read(img_path)
+    img.add_catalog()
 
     def fitness(ip, r, zx, zy, ao):
-        return -np.sum(ip(project_stars(altaz, r, zx, zy, ao)) ** 2)
-    w, h = cam.resolution['x'], cam.resolution['y']
+        pos = cam.__calib_project__(img.stars.az.values * u.deg,
+                                    img.stars.alt.values * u.deg,
+                                    ao * u.deg, zx, zy, r)
+        return -np.sum(ip(np.array(pos)) ** 2)
+    
+    w, h = cam.resolution['y'], cam.resolution['x']
     if x0 is None:
         x0 = np.array([w * 0.5,
                        h * 0.5,
@@ -165,7 +164,8 @@ def fit_camera_params(img_path,
     s = init_sigma
     ip0 = RegularGridInterpolator((np.arange(w), np.arange(h)),
                                    img.image, method='linear',
-                                   bounds_error=False)
+                                   bounds_error=False,
+                                   fill_value=0)
     if verbose: print('Starting minimization procedure ...')
     i = 1
     while True:
@@ -174,7 +174,7 @@ def fit_camera_params(img_path,
         ip = RegularGridInterpolator((np.arange(w), np.arange(h)),
                                       gaussian(img.image, s),
                                       method='linear',
-                                      bounds_error=False)
+                                      bounds_error=False, fill_value=0)
         res = minimize(lambda p: fitness(ip, *p), x0=x0, method='powell')
         s /= stepsize
         x0 = res.x
