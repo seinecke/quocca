@@ -25,7 +25,7 @@ cta:
     x: 848.8933456349624
     y: 848.573790060579
 iceact:
-  az_offset: 3.0
+  az_offset: 2.954425486041723
   filter_star_detection:
     '1970-01-01T00:00:01.000': 0.23302372984015565
   llh_star_detection:
@@ -37,7 +37,7 @@ iceact:
   mapping: lin
   mask: resources/iceact_mask.png
   max_val: 65536
-  radius: 304.5
+  radius: 249.69522492175076
   resolution:
     x: 640
     y: 480
@@ -47,5 +47,5 @@ iceact:
   timestamps:
   - DATE-OBS
   zenith:
-    x: 326.3
-    y: 250
+    x: 303.1264527743301
+    y: 326.5390254890759

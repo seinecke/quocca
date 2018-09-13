@@ -149,7 +149,7 @@ def fit_camera_params(img_path,
     img = cam.read(img_path)
     img.add_catalog()
 
-    def fitness(ip, r, zx, zy, ao):
+    def fitness(img, ip, r, zx, zy, ao):
         pos = cam.__calib_project__(img.stars.az.values * u.deg,
                                     img.stars.alt.values * u.deg,
                                     ao * u.deg, zx, zy, r)
@@ -175,12 +175,12 @@ def fit_camera_params(img_path,
                                       gaussian(img.image, s),
                                       method='linear',
                                       bounds_error=False, fill_value=0)
-        res = minimize(lambda p: fitness(ip, *p), x0=x0, method='powell')
+        res = minimize(lambda p: fitness(img, ip, *p), x0=x0, method='powell')
         s /= stepsize
         x0 = res.x
         if verbose:
             print("Step {}: {:.3f}, {}, {}"
-                  .format(i, fitness(ip0, *res.x), res.success, res.x))
+                  .format(i, fitness(img, ip0, *res.x), res.success, res.x))
         i += 1
     if verbose: print("Final result:\n  zenith: ({}, {})\n  radius: {}\n  azimuth offset: {}"
                       .format(*x0))
