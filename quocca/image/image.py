@@ -142,21 +142,22 @@ class Image:
         """
         if type(catalog) == str:
             catalog = Catalog(catalog)
-        star_pos, star_altaz, star_mag, star_id = self.camera.project_stars(catalog, self.time)
+        star_pos, star_altaz = self.camera.project_stars(catalog, self.time)
         mask_nearby = nearby_stars(star_pos[:,0],
                                    star_pos[:,1],
-                                   star_mag, min_dist or 0.0)
+                                   catalog.mag, min_dist or 0.0)
 
-        mask_mag = star_mag < (max_mag or np.inf)
+        mask_mag = catalog.mag < (max_mag or np.inf)
         mask_obscur = self.camera.check_mask(*star_pos.T) == 1
         mask = mask_obscur & mask_mag & mask_nearby 
-        self.stars = pd.DataFrame({'id': star_id[mask].astype(int),
+        self.stars = pd.DataFrame({'id': catalog.id[mask].astype(int),
                                    'x': star_pos[mask, 0],
                                    'y': star_pos[mask, 1],
                                    'alt': np.array(star_altaz.alt)[mask],
                                    'az': np.array(star_altaz.az)[mask],
-                                   'mag': star_mag[mask]},
-                                   index=star_id[mask].astype(int))
+                                   'mag': catalog.mag[mask],
+                                   'var': catalog.var[mask]},
+                                   index=catalog.id[mask].astype(int))
 
     def rm_celestial_bodies(self, radius=10.0, bodies=['moon', 'venus', 'mars',
                                                        'mercury', 'jupiter',
