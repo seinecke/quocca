@@ -123,13 +123,13 @@ def show_img(img, ax=None, upper=99.8, alt_circles=[30, 60]):
     # Inserts image into a larger paspartout
     frame_size = np.max([img.camera.resolution['x'],
                          img.camera.resolution['y']])
-    larger_frame_x_hi = x0 + frame_size * 0.53
-    larger_frame_x_lo = x0 - frame_size * 0.53
-    larger_frame_y_hi = y0 + frame_size * 0.53
-    larger_frame_y_lo = y0 - frame_size * 0.53
+    larger_frame_x_hi = x0 + frame_size * 0.57
+    larger_frame_x_lo = x0 - frame_size * 0.57
+    larger_frame_y_hi = y0 + frame_size * 0.57
+    larger_frame_y_lo = y0 - frame_size * 0.57
     
     ax.set_xlim([larger_frame_x_lo, larger_frame_x_hi])
-    ax.set_ylim([larger_frame_y_lo, larger_frame_y_hi])
+    ax.set_ylim([larger_frame_y_hi, larger_frame_y_lo])
     return ax
 
 
