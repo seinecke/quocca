@@ -11,7 +11,7 @@ from progressbar import progressbar
 
 from scipy.spatial import cKDTree
 from scipy.optimize import minimize
-from scipy.ndimage import gaussian_laplace
+from scipy.ndimage import convolve
 
 from skimage.filters import gaussian
 
@@ -19,6 +19,37 @@ from ruamel import yaml
 from pkg_resources import resource_filename
 import warnings
 from astropy.time import Time
+
+
+def laplacian_gaussian_filter(img, sigma, prec=1e-16):
+     """Laplacian of the Gaussian filter.
+
+     Parameters
+     ----------
+     img : numpy.array
+         Image.
+     sigma : float
+         Spread parameter of the filter.
+     prec : float, default=1e-16
+         Values of the kernel lower than this value are cut away.
+
+     Returns
+     -------
+     filtered_img : numpy.array
+         Filtered image.
+     """
+     tx = np.arange(img.shape[0]) - img.shape[0] * 0.5
+     ty = np.arange(img.shape[0]) - img.shape[0] * 0.5
+     mx, my = np.meshgrid(tx, ty)
+     r2 = (mx ** 2 + my ** 2) / (2.0 * sigma ** 2)
+     kernel = 1.0 / (np.pi * sigma ** 4) * (1.0 - r2) * np.exp(-r2)
+     kernel /= np.max(kernel)
+     kernelsum = np.max(np.abs(kernel), axis=0)
+     below_prec = np.where(kernelsum > prec)[0]
+     lower = below_prec[0]
+     upper = below_prec[-1]
+     kernel = kernel[lower:upper, lower:upper]
+     return convolve(img, kernel)
 
 
 def get_slice(pos, size, shape):
@@ -142,8 +173,6 @@ class StarDetectionLLH(StarDetectionBase):
         super(StarDetectionLLH, self).__init__(camera)
         self.sigma = sigma
         self.size = (fit_size, fit_size)
-        self.fit_pos = fit_pos
-        self.fit_sigma = fit_sigma
         self.presmoothing = presmoothing
         self.verbose = verbose
         self.remove_detected_stars = remove_detected_stars
@@ -215,7 +244,7 @@ class StarDetectionLLH(StarDetectionBase):
                          x0=[np.max(img[sel]) - np.mean(img[sel]), 
                              np.mean(img[sel]),
                              pos[idx,1], pos[idx,0]],
-                         method='BFGS')
+                         method='Powell')
             if self.remove_detected_stars:
                 img[sel] -= self.blob_func(mx[sel], my[sel], r.x[2], r.x[3],
                                            r.x[0], self.sigma, 0.0)
@@ -276,7 +305,7 @@ class StarDetectionFilter(StarDetectionBase):
         """
         super(StarDetectionFilter, self).detect(image)
         from matplotlib import pyplot as plt
-        img = gaussian_laplace(image.image, self.sigma)
+        img = laplacian_gaussian_filter(image.image, self.sigma)
 
         tx = np.arange(img.shape[0])
         ty = np.arange(img.shape[1])
