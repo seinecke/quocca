@@ -63,59 +63,72 @@ def show_img(img, ax=None, upper=99.8, alt_circles=[30, 60]):
                cmap='gray', interpolation='none')
     
     r = img.camera.radius
-    phi = np.deg2rad(img.camera.az_offset.to_value())
+    phi = np.deg2rad(img.camera.az_offset)
     x0 = img.camera.zenith['x']
     y0 = img.camera.zenith['y']
     pos0 = np.array([x0, y0])
     dir_ax1 = np.array([np.cos(phi), np.sin(phi)])
     dir_ax2 = np.array([-np.sin(phi), np.cos(phi)])
-    alt_circles.append(90)
+
+    # Append 90 deg circle, which marks the horizon and should always be
+    # present.
+    alt_circles = alt_circles + [90]
     
+    # Define altitude circles.
     circles = [Circle((img.camera.zenith['x'], img.camera.zenith['y']),
-                      img.camera.theta2r(angle * u.deg),
+                      img.camera.theta2r(angle),
                       **alt_circle_style)
                for angle in alt_circles]
     circles[-1].set_linestyle('-')
+    for c__ in circles:
+        ax.add_patch(c__)
+
+    # Calculate rotation angle that is closest to horizontal for all text
+    # elements.
     rot_angles = np.array([-np.rad2deg(phi) + a
                            for a in [-270, -180, -90, 0, 90, 180, 270]]) 
     rot_angle = rot_angles[np.argwhere((rot_angles > -45)
                                        & (rot_angles < 45))[0]][0]
     
+    # Add labels for altitude circles.
     for angle in alt_circles:
-        pos = pos0 + dir_ax1 * (img.camera.theta2r(angle * u.deg))
+        pos = pos0 + dir_ax1 * (img.camera.theta2r(angle))
         ax.text(pos[0], pos[1], u' {}˚'.format(angle), rotation=rot_angle,
                 **alt_label_style)
-        pos = pos0 + dir_ax2 * (img.camera.theta2r(angle * u.deg))
+        pos = pos0 + dir_ax2 * (img.camera.theta2r(angle))
         ax.text(pos[0], pos[1], u' {}˚'.format(angle), rotation=rot_angle,
                 **alt_label_style)
-        pos = pos0 - dir_ax1 * (img.camera.theta2r(angle * u.deg))
+        pos = pos0 - dir_ax1 * (img.camera.theta2r(angle))
         ax.text(pos[0], pos[1], u' {}˚'.format(angle), rotation=rot_angle,
                 **alt_label_style)
-        pos = pos0 - dir_ax2 * (img.camera.theta2r(angle * u.deg))
+        pos = pos0 - dir_ax2 * (img.camera.theta2r(angle))
         ax.text(pos[0], pos[1], u' {}˚'.format(angle), rotation=rot_angle,
                 **alt_label_style)
     
-    pos = pos0 + dir_ax1 * (img.camera.theta2r(98 * u.deg))
+    # Add labels for cardinal directions.
+    pos = pos0 + dir_ax1 * (img.camera.theta2r(98))
     ax.text(pos[0], pos[1], 'W', rotation=rot_angle, **card_label_style)
-    pos = pos0 + dir_ax2 * (img.camera.theta2r(98 * u.deg))
+    pos = pos0 + dir_ax2 * (img.camera.theta2r(98))
     ax.text(pos[0], pos[1], 'S', rotation=rot_angle, **card_label_style)
-    pos = pos0 - dir_ax1 * (img.camera.theta2r(98 * u.deg))
+    pos = pos0 - dir_ax1 * (img.camera.theta2r(98))
     ax.text(pos[0], pos[1], 'E', rotation=rot_angle, **card_label_style)
-    pos = pos0 - dir_ax2 * (img.camera.theta2r(98 * u.deg))
+    pos = pos0 - dir_ax2 * (img.camera.theta2r(98))
     ax.text(pos[0], pos[1], 'N', rotation=rot_angle, **card_label_style)
     
+    # Add cross.
     ax.plot([-1.01 * r * np.cos(phi) + x0, 1.01 * r * np.cos(phi) + x0],
             [-1.01 * r * np.sin(phi) + y0, 1.01 * r * np.sin(phi) + y0], 'w')
     ax.plot([-1.01 * r * np.cos(phi + np.pi * 0.5) + x0,
              1.01 * r * np.cos(phi + np.pi * 0.5) + x0],
             [-1.01 * r * np.sin(phi + np.pi * 0.5) + y0,
              1.01 * r * np.sin(phi + np.pi * 0.5) + y0], 'w')
-    for c__ in circles:
-        ax.add_patch(c__)
-    ax.text(0.01, 0.99, '{}\n{}'.format(img.time, img.camera.name), color='w',
-             horizontalalignment='left', verticalalignment='top',
+
+    # Short descriptor of image with cam name and time.
+    ax.text(0.01, 0.99, '{}\n{}'.format(img.time.datetime, img.camera.name),
+             color='w', horizontalalignment='left', verticalalignment='top',
              transform=ax.transAxes)
     
+    # Axes begone!
     ax.get_xaxis().set_visible(False)
     ax.get_yaxis().set_visible(False)
     ax.set_facecolor('k')
@@ -159,13 +172,13 @@ def show_clouds(img, cloudmap, ax=None, color='#7ac143', opaque=False,
     return ax
 
 
-def add_circle(posx, posy, mag, max_mag=20.0, size=30, color='#7ac143',
-               ax=None):
+def add_stars(posx, posy, mag, max_mag=20.0, size=30, color='#7ac143',
+              ax=None):
     if ax is None:
         fig, ax = plt.subplots(figsize=(12, 12))
         
     display = mag < max_mag
-    ax.scatter(posx[display], posy[display],
+    ax.scatter(posy[display], posx[display],
                s=size, marker='o', facecolor='', edgecolor=color)
 
     return ax

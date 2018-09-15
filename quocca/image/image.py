@@ -151,7 +151,8 @@ class Image:
 
         mask_mag = catalog.mag < (max_mag or np.inf)
         mask_alt = np.array(star_altaz.alt) > (min_alt or 0)
-        mask_var = (catalog.var < max_var) | np.isnan(catalog.var)
+        mask_var = (catalog.variability < max_var)\
+                  | np.isnan(catalog.variability)
         mask_obscur = self.camera.check_mask(*star_pos.T) == 1
         mask = mask_obscur & mask_mag & mask_nearby & mask_alt & mask_var
         self.stars = pd.DataFrame({'id': catalog.id[mask].astype(int),
@@ -160,7 +161,7 @@ class Image:
                                    'alt': np.array(star_altaz.alt)[mask],
                                    'az': np.array(star_altaz.az)[mask],
                                    'mag': catalog.mag[mask],
-                                   'var': catalog.var[mask]},
+                                   'var': catalog.variability[mask]},
                                    index=catalog.id[mask].astype(int))
 
     def rm_celestial_bodies(self, radius=10.0, bodies=['moon', 'venus', 'mars',

@@ -13,7 +13,7 @@ from skimage.filters import gaussian
 
 
 class CloudinessCalculator:
-    """Cloudinessase class
+    """Cloudiness Base Class
     """
     def __init__(self, *args, **kwargs):
         pass

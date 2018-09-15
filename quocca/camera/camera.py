@@ -11,15 +11,14 @@ from pkg_resources import resource_filename
 from imageio import imread
 from scipy.interpolate import RegularGridInterpolator
 
-from astropy import units as u
-from astropy.coordinates import Angle, EarthLocation
+from astropy.coordinates import EarthLocation
 
 from ..image import Image
 from ..utilities import calibrate_method
 
 
 def r2theta_lin(r, radius):
-    return r * (np.pi * u.rad) / (2.0 * radius)
+    return r * np.pi / (2.0 * radius)
 
 
 def r2theta_nonlin(r, radius):
@@ -27,16 +26,16 @@ def r2theta_nonlin(r, radius):
 
 
 def theta2r_lin(theta, radius):
-    return radius / (np.pi * u.rad / 2.0) * theta.to(u.rad)
+    return 2.0 * np.deg2rad(theta) * radius / np.pi
 
 
 def theta2r_nonlin(theta, radius):
-    return np.sqrt(2.0) * radius * np.sin(theta.to(u.rad) / 2.0)
+    return np.sqrt(2.0) * radius * np.sin(np.deg2rad(theta) / 2.0)
 
 
 def rphi2pxl(r, phi, az_offset, x0, y0):
-    row = -r * np.sin(phi + az_offset) + y0
-    col = r * np.cos(phi + az_offset) + x0
+    row = -r * np.sin(np.deg2rad(phi + az_offset)) + y0
+    col = r * np.cos(np.deg2rad(phi + az_offset)) + x0
     return np.column_stack((row, col))
 
 
@@ -45,7 +44,7 @@ class Camera:
     
     Attributes
     ----------
-    az_offset : astropy.coordinates.Angle object
+    az_offset : float
         Offset angle against north in degrees.
     location : astropy.coordinates.EarthLocation object
         Location of the camera.
@@ -98,7 +97,6 @@ class Camera:
 
             # Location and offset are converted to a astropy quantity.
             self.location = EarthLocation(**self.location)
-            self.az_offset = Angle(self.az_offset * u.deg)
             try:
                 mask_path = resource_filename('quocca', self.mask)
                 mask = np.array(imread(mask_path)) != 0
@@ -109,11 +107,13 @@ class Camera:
             self.mask = RegularGridInterpolator((tx, ty), mask,
                                                 bounds_error=False,
                                                 method='nearest')
+
             # Checking for any missing obligatory attributes.
             for attribute in self.__required_attributes__:
                 if attribute not in list(self.__dict__.keys()):
                     raise KeyError('{} attribute missing in configuration.'
                                    .format(attribute))
+
             if self.mapping == 'lin':
                 self.theta2r_fun = theta2r_lin
                 self.r2theta_fun = r2theta_lin
@@ -126,6 +126,20 @@ class Camera:
     
     def __str__(self):
         return 'Camera {}'.format(self.name)
+
+    def __repr__(self):
+        s = "All Sky Cam '{}':\n".format(self.name)
+        s += "\tLocation: ({:.2f},{:.2f})\n".format(self.location.lat,
+                                            self.location.lon)
+        s += "\tAzmimuth Offset: {:.2f}\n".format(self.az_offset)
+        s += "\tMapping: {}\n".format(self.mapping)
+        s += "\tMaximum Pixel Value: {}\n".format(self.max_val)
+        s += "\tRadius: {:.2f}\n".format(self.radius)
+        s += "\tResolution: {}x{}px".format(self.resolution['x'],
+                                            self.resolution['y'])
+        s += "\tZenith Position: ({:.2f},{:.2f})px".format(self.zenith['x'],
+                                                           self.zenith['y'])
+        return s
 
     def read(self, filename):
         """Reads an image corresponding to camera defined in the object.
@@ -150,7 +164,7 @@ class Camera:
         
         Parameters
         ----------
-        theta : astropy.coordinates.Angle
+        theta : float or numpy.array
             Altitude angle in degrees.
         
         Returns
@@ -198,14 +212,14 @@ class Camera:
         return self.mask((x, y)) == 1
         
     def __project_stars__(self, phi, theta):
-        r = self.theta2r(Angle('90d') - theta)
+        r = self.theta2r(90.0 - theta)
         row = -r * np.sin(phi + self.az_offset) + self.zenith['x']
         col = r * np.cos(phi + self.az_offset) + self.zenith['y']
         return row, col
 
     def __calib_project__(self, phi, theta, az_offset,
                           zenith_x, zenith_y, radius):
-        r = self.theta2r_fun(Angle('90d') - theta, radius)
+        r = self.theta2r_fun(90.0 - theta, radius)
         pxl = rphi2pxl(r, phi, az_offset, zenith_x,
                        zenith_y)
         return pxl
@@ -222,20 +236,25 @@ class Camera:
         
         Returns
         -------
-        pixel_coordinates : numpy.array, shape=(n_stars, 2)
+        pxl : numpy.array, shape=(n_stars, 2)
             Calculated pixel coordinates for each star.
-        magnitude : numpy.array
-            Magnitude of each star.
-        id : IDs of the projected stars.
+        altaz : numpy.array, shape=(n_stars, 2)
+            Alt/Az-Coordinates of each star.
         """
         altaz = catalog.get_horizontal(self, time)
         phi, theta = altaz.az, altaz.alt
-        r = self.theta2r(Angle('90d') - theta)
+        r = self.theta2r(90.0 - theta)
         pxl = rphi2pxl(r, phi, self.az_offset, self.zenith['x'],
                        self.zenith['y'])
         return pxl, altaz
 
-    def calibrate(self, img, method, time=0, update=True, kwargs_catalog={}, kwargs_method={}):
+    def calibrate(self,
+                  img,
+                  method,
+                  time=0,
+                  update=True,
+                  kwargs_catalog={},
+                  kwargs_method={}):
         """Calibrate a method for this camera.
 
         Parameters

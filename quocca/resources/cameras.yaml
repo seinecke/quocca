@@ -37,7 +37,7 @@ iceact:
   mapping: lin
   mask: resources/iceact_mask.png
   max_val: 65536
-  radius: 249.69522492175076
+  radius: 303.1264527743301
   resolution:
     x: 640
     y: 480
@@ -47,5 +47,5 @@ iceact:
   timestamps:
   - DATE-OBS
   zenith:
-    x: 303.1264527743301
-    y: 326.5390254890759
+    x: 326.5390254890759
+    y: 249.69522492175076

@@ -5,6 +5,7 @@ Catalogs.
 2018"""
 
 import numpy as np
+import pandas as pd
 from ruamel import yaml
 from pkg_resources import resource_filename
 
@@ -13,22 +14,30 @@ from astropy.constants import atm
 from astropy.coordinates import SkyCoord, AltAz
 
 
-class Catalog(Table):
+class Catalog(pd.DataFrame):
     with open(resource_filename('quocca', 'resources/catalogs.yaml')) as file:
         __config__ = yaml.safe_load(file)
         __supported_catalogs__ = list(__config__.keys())
-        
+
     def __init__(self, name):
         if name not in self.__supported_catalogs__:
             raise NotImplementedError('Unsupported Catalog {}'.format(name))
-        super(Catalog, self).__init__(Table.read(resource_filename('quocca', self.__config__[name]['file'])))
-        self.remove_rows(np.isnan(self['ra']) | np.isnan(self['dec']))
-        self.id = self[self.__config__[name]['id']]
-        self.var = self[self.__config__[name]['var']]
-        self.ra = self[self.__config__[name]['ra']]
-        self.dec = self[self.__config__[name]['dec']]
-        self.mag = self[self.__config__[name]['mag']]
-    
+        table = Table.read(resource_filename('quocca',
+                                             self.__config__[name]['file']))
+        table.remove_rows(np.isnan(table[self.__config__[name]['ra']])
+                        | np.isnan(table[self.__config__[name]['dec']]))
+        table = table.to_pandas()
+        attributes = {
+            'id': np.array(table[self.__config__[name]['id']]).astype(int),
+            'variability': np.array(table[self.__config__[name]['var']]),
+            'ra': np.array(table[self.__config__[name]['ra']]),
+            'dec': np.array(table[self.__config__[name]['dec']]),
+            'mag': np.array(table[self.__config__[name]['mag']])
+        }
+        super(Catalog, self).__init__(attributes,
+                                      index=attributes['id'],
+                                      copy=True)
+
     def get_horizontal(self, camera, time):
         """Transforms ra/dec coordinates from catalog into alt-az coordinates.
 
@@ -44,9 +53,11 @@ class Catalog(Table):
         pos_altaz : astropy.coordinates.sky_coordinate.SkyCoord object
             Positions in altitude and azimuth.
         """
-        pos = SkyCoord(ra=self['ra'], dec=self['dec'],
+        pos = SkyCoord(ra=self.ra.values, dec=self.dec.values,
                        frame='icrs', unit='deg')
-        pos_altaz = pos.transform_to(AltAz(obstime=time,
-                                           location=camera.location,
-                                           pressure=atm))
-        return pos_altaz
+        altaz = pos.transform_to(AltAz(obstime=time,
+                                       location=camera.location,
+                                       pressure=atm))
+        return pd.DataFrame({'alt': np.array(altaz.alt),
+                             'az': np.array(altaz.az)},
+                             index=self.id.values)
