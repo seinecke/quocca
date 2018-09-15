@@ -162,7 +162,7 @@ class Image:
                                    'az': np.array(star_altaz.az)[mask],
                                    'mag': catalog.mag[mask],
                                    'var': catalog.variability[mask]},
-                                   index=catalog.id[mask].astype(int))
+                                   index=catalog.id[mask].values.astype(int))
 
     def rm_celestial_bodies(self, radius=10.0, bodies=['moon', 'venus', 'mars',
                                                        'mercury', 'jupiter',

@@ -257,7 +257,7 @@ class StarDetectionLLH(StarDetectionBase):
                          x0=[np.max(img[sel]) - np.mean(img[sel]), 
                              np.mean(img[sel]),
                              pos[idx,1], pos[idx,0]],
-                         method='Powell')
+                         method='BFGS')
             if self.remove_detected_stars:
                 img[sel] -= self.blob_func(mx[sel], my[sel], r.x[2], r.x[3],
                                            r.x[0], self.sigma, 0.0)
@@ -268,7 +268,9 @@ class StarDetectionLLH(StarDetectionBase):
             results['b_fit'][idx] = np.abs(r.x[1])
             results['y_fit'][idx] = r.x[2]
             results['x_fit'][idx] = r.x[3]
-        return pd.DataFrame(results, index=results['id'].astype(int))
+        results = pd.DataFrame(results, index=results['id'].astype(int))
+        results.id = results.id.astype(int)
+        return results
 
 
 class StarDetectionFilter(StarDetectionBase):
