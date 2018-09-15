@@ -111,6 +111,9 @@ def add_camera(name,
 def fit_camera_params(img_path,
                       cam,
                       max_mag=3.0,
+                      max_var=2,
+                      min_alt=30,
+                      catalog='hipparcos',
                       x0=None,
                       init_sigma=10.0,
                       stepsize=1.2,
@@ -147,7 +150,7 @@ def fit_camera_params(img_path,
         raise ValueError('init_sigma needs to be > 0.1.')
 
     img = cam.read(img_path)
-    img.add_catalog()
+    img.add_catalog(catalog,max_mag, max_var, min_alt)
 
     def fitness(img, ip, r, zx, zy, ao):
         pos = cam.__calib_project__(img.stars.az.values * u.deg,

@@ -1,5 +1,5 @@
 cta:
-  az_offset: 87.30484980650667
+  az_offset: 87.29290909619468
   llh_star_detection:
     '1970-01-01T00:00:01.000': 1.9690027914483894
     '2015-12-19T00:00:01.000': 0.6438040685676666
@@ -11,7 +11,7 @@ cta:
   mapping: nonlin
   mask: resources/cta_mask.png
   max_val: 65536
-  radius: 848.8756288919432
+  radius: 847.6860353873069
   resolution:
     x: 1699
     y: 1699
@@ -22,8 +22,8 @@ cta:
   - UTC1
   - TIMEUTC
   zenith:
-    x: 848.8933456349624
-    y: 848.573790060579
+    x: 848.6611473342803
+    y: 848.7671261260604
 iceact:
   az_offset: 2.954425486041723
   filter_star_detection:
