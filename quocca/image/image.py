@@ -128,7 +128,7 @@ class Image:
         return "All Sky Camera Image by '{}' on {}.".format(self.camera.name,
                                                             self.time)
 
-    def add_catalog(self, catalog='hipparcos', max_mag=5.5, min_dist=10.0):
+    def add_catalog(self, catalog='hipparcos', max_mag=5.5, min_dist=10.0, min_alt=0, max_var=2):
         """Adds a catalog to the image.
 
         Parameters
@@ -139,6 +139,8 @@ class Image:
             Maximum magnitude.
         min_dist : float
             Minimal distance between one star to the next.
+        min_alt:
+            Minimal altitude to consider.
         """
         if type(catalog) == str:
             catalog = Catalog(catalog)
@@ -148,8 +150,10 @@ class Image:
                                    catalog.mag, min_dist or 0.0)
 
         mask_mag = catalog.mag < (max_mag or np.inf)
+        mask_alt = np.array(star_altaz.alt) > (min_alt or 0)
+        mask_var = (catalog.var < max_var) | np.isnan(catalog.var)
         mask_obscur = self.camera.check_mask(*star_pos.T) == 1
-        mask = mask_obscur & mask_mag & mask_nearby 
+        mask = mask_obscur & mask_mag & mask_nearby & mask_alt & mask_var
         self.stars = pd.DataFrame({'id': catalog.id[mask].astype(int),
                                    'x': star_pos[mask, 0],
                                    'y': star_pos[mask, 1],
