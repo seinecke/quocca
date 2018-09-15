@@ -233,7 +233,7 @@ class Camera:
         r = self.theta2r(Angle('90d') - theta)
         pxl = rphi2pxl(r, phi, self.az_offset, self.zenith['x'],
                        self.zenith['y'])
-        return pxl, altaz, catalog.mag, catalog.id
+        return pxl, altaz
 
     def calibrate(self, img, method, time=0, update=True, kwargs_catalog={}, kwargs_method={}):
         """Calibrate a method for this camera.
