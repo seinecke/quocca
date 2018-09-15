@@ -235,9 +235,6 @@ class StarDetectionLLH(StarDetectionBase):
             'b_fit',
             'x_fit',
             'y_fit',
-            'v_mag',
-            'x',
-            'y',
             'visibility'
         ]
         results = {key: np.zeros(n_stars) for key in keys}
@@ -270,9 +267,6 @@ class StarDetectionLLH(StarDetectionBase):
             results['b_fit'][idx] = np.abs(r.x[1])
             results['y_fit'][idx] = r.x[2]
             results['x_fit'][idx] = r.x[3]
-            results['v_mag'][idx] = image.stars.mag.iloc[idx]
-            results['x'][idx] = image.stars.x.iloc[idx]
-            results['y'][idx] = image.stars.y.iloc[idx]
         return pd.DataFrame(results, index=results['id'].astype(int))
 
 
@@ -301,7 +295,7 @@ class StarDetectionFilter(StarDetectionBase):
                                image.stars.y.values))
         results = {
             key: np.zeros(n_stars)
-            for key in ['id', 'M_fit', 'v_mag', 'x', 'y', 'visibility']
+            for key in ['id', 'M_fit', 'visibility']
         }
         iterator = tqdm(range(n_stars)) if self.verbose else range(n_stars)
         for idx in iterator:
@@ -312,7 +306,4 @@ class StarDetectionFilter(StarDetectionBase):
             results['M_fit'][idx] = M
             visibility = M / np.exp(-image.stars.mag.iloc[idx])
             results['visibility'][idx] = visibility * self.calibration
-            results['v_mag'][idx] = image.stars.mag.iloc[idx]
-            results['x'][idx] = image.stars.x.iloc[idx]
-            results['y'][idx] = image.stars.y.iloc[idx]
         return pd.DataFrame(results, index=results['id'].astype(int))
