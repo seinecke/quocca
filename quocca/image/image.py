@@ -71,8 +71,8 @@ class Image:
         Timestamp.
     camera : quocca.camera.Camera
         Camera the image is associated with.
-    star_pos, star_mag : numpy.array
-        Position in pixels and magnitude of the stars potentially visible.
+    stars : pandas.DataFrame
+        Stars in the image, i.e. pixel positions etc.
     
     Notes
     -----
@@ -191,7 +191,6 @@ class Image:
         choice = np.all(D > radius, axis=1)
         self.star_pos = self.star_pos[choice, :]
         self.star_mag = self.star_mag[choice]
-
 
     def detect(self, method='llh', **kwargs):
         """Detects stars in the image.

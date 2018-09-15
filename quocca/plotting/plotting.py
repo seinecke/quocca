@@ -146,8 +146,7 @@ def show_img(img, ax=None, upper=99.8, alt_circles=[30, 60]):
     return ax
 
 
-def show_clouds(img, cloudmap, ax=None, color='#7ac143', opaque=False,
-                **kwargs):
+def show_clouds(img, cloudmap, ax=None, **kwargs):
     cmap = plt.cm.rainbow
     my_cmap = cmap(np.arange(cmap.N))
     my_cmap[:,-1] = np.linspace(0, 1, cmap.N)
@@ -161,14 +160,9 @@ def show_clouds(img, cloudmap, ax=None, color='#7ac143', opaque=False,
     cloudmap_fit[img.camera.mask((mx, my)) == 0] = 0.0
     if ax is None:
         fig, ax = plt.subplots(figsize=(12, 12))
-    if opaque:
-        cloudmap_fit[cloudmap_fit == 0.0] = np.nan
-        ax.contourf(tx, ty, 1.0 - (cloudmap_fit).T, cmap=my_cmap,
-                    levels=np.linspace(0.0, 1.0, 20))
-    else:
-        ax.contour(tx, ty, (cloudmap_fit).T, colors=color,
-                   linestyles=['-', '--', ':'],
-                   levels=[0.25, 0.5, 0.75])
+    cloudmap_fit[cloudmap_fit == 0.0] = np.nan
+    ax.contourf(tx, ty, 1.0 - (cloudmap_fit).T, cmap=my_cmap,
+                levels=np.linspace(0.0, 1.0, 20))
     return ax
 
 

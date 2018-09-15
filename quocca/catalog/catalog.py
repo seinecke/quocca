@@ -15,11 +15,33 @@ from astropy.coordinates import SkyCoord, AltAz
 
 
 class Catalog(pd.DataFrame):
+    """Catalog class. Basically a pandas dataframe with few additional features
+    to facilitate the handling of star catalogs.
+
+    Attributes
+    ----------
+    id : pandas.DataFrame column
+        Some id for each star, e.g. the HIP
+    variability : pandas.DataFrame column
+        Some qualifier for the amount of variability of a star.
+    ra, dec : pandas.DataFrame column
+        Ra/Dec coordinates in deg.
+    mag : pandas.DataFrame column
+        The magnitude of each star.
+    """
     with open(resource_filename('quocca', 'resources/catalogs.yaml')) as file:
         __config__ = yaml.safe_load(file)
         __supported_catalogs__ = list(__config__.keys())
 
     def __init__(self, name):
+        """Inilialize a catalog.
+
+        Parameters
+        ----------
+        name : str
+            Name of the catalog. See Catalog.__supported_catalogs__ for which
+            catalogs are supported.
+        """
         if name not in self.__supported_catalogs__:
             raise NotImplementedError('Unsupported Catalog {}'.format(name))
         table = Table.read(resource_filename('quocca',
@@ -50,7 +72,7 @@ class Catalog(pd.DataFrame):
 
         Returns:
         --------
-        pos_altaz : astropy.coordinates.sky_coordinate.SkyCoord object
+        pos_altaz : pandas.DataFrame
             Positions in altitude and azimuth.
         """
         pos = SkyCoord(ra=self.ra.values, dec=self.dec.values,

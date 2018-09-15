@@ -8,10 +8,13 @@ import numpy as np
 import pandas as pd
 
 from progressbar import progressbar
+
 from scipy.spatial import cKDTree
 from scipy.optimize import minimize
-from scipy.ndimage import convolve
+from scipy.ndimage import gaussian_laplace
+
 from skimage.filters import gaussian
+
 from ruamel import yaml
 from pkg_resources import resource_filename
 import warnings
@@ -26,37 +29,6 @@ def get_slice(pos, size, shape):
     b_max = np.clip(pos[0] + size[0] + 1, 0, shape[1] - 1)
     return (slice(a_min, a_max, None),
             slice(b_min, b_max, None))
-
-
-def laplacian_gaussian_filter(img, sigma, prec=1e-16):
-    """Laplacian of the Gaussian filter.
-
-    Parameters
-    ----------
-    img : numpy.array
-        Image.
-    sigma : float
-        Spread parameter of the filter.
-    prec : float, default=1e-16
-        Values of the kernel lower than this value are cut away.
-
-    Returns
-    -------
-    filtered_img : numpy.array
-        Filtered image.
-    """
-    tx = np.arange(img.shape[0]) - img.shape[0] * 0.5
-    ty = np.arange(img.shape[0]) - img.shape[0] * 0.5
-    mx, my = np.meshgrid(tx, ty)
-    r2 = (mx ** 2 + my ** 2) / (2.0 * sigma ** 2)
-    kernel = 1.0 / (np.pi * sigma ** 4) * (1.0 - r2) * np.exp(-r2)
-    kernel /= np.max(kernel)
-    kernelsum = np.max(np.abs(kernel), axis=0)
-    below_prec = np.where(kernelsum > prec)[0]
-    lower = below_prec[0]
-    upper = below_prec[-1]
-    kernel = kernel[lower:upper, lower:upper]
-    return convolve(img, kernel)
 
 
 def mean_cov(mx, my, M):
@@ -125,7 +97,6 @@ def get_calibration(cam_name, meth_name, time):
                 warnings.warn('No calibration setting found.')
                 return 1.0
 
-
         except KeyError:
             warnings.warn('No calibration setting found.')
             return 1.0
@@ -150,12 +121,6 @@ class StarDetectionLLH(StarDetectionBase):
     
     Attributes
     ----------
-    fit_pos : bool
-        Whether or not to fit the position of the star
-        [WARNING: Not implemented!]
-    fit_sigma : bool
-        Whether or not to fit the shape of the star
-        [WARNING: Not implemented!]
     name : str
         Name of the method
     presmoothing : float
@@ -164,11 +129,15 @@ class StarDetectionLLH(StarDetectionBase):
         Sigma parameter of the model used during fit.
     size : tuple(int)
         Size of the cropped out parts of the image for fitting.
+    verbose : bool
+        Verbosity flag.
+    remove_detected_stars : bool
+        Whether or not to successively remove fitted stars as they are
+        detected.
     """
     name = 'llh_star_detection'
 
-    def __init__(self, camera, sigma=1.7, fit_size=8, fit_pos=True,
-                 fit_sigma=False, presmoothing=1.5,
+    def __init__(self, camera, sigma=1.7, fit_size=8, presmoothing=1.5,
                  remove_detected_stars=False, verbose=True):
         super(StarDetectionLLH, self).__init__(camera)
         self.sigma = sigma
@@ -191,15 +160,6 @@ class StarDetectionLLH(StarDetectionBase):
     def blob_func(self, x, y, x0, y0, mag, sigma, bkg):
         arg = -((x - x0) ** 2 + (y - y0) ** 2) / (2.0 * sigma ** 2)
         return np.abs(mag) * np.exp(arg) + np.abs(bkg)
-
-    """def blob_func(self, x, y, x0, y0, mag, sx, sy, rho, bkg):
-        x_ = x - x0
-        y_ = y - y0
-        upper = sy ** 2 * x_ ** 2 - 2.0 * rho * sx * sy * x_ * y_ + sx ** 2\
-                * y_ ** 2
-        det2 = (rho **2 - 1) * sx ** 2 * sy ** 2
-        arg = upper / det2
-        return np.clip(np.abs(mag) * np.exp(arg) + np.abs(bkg), 0.0, 1.0)"""
     
     def detect(self, image):
         """Detect method.
@@ -213,13 +173,11 @@ class StarDetectionLLH(StarDetectionBase):
         -------
         pandas.DataFrame
             DataFrame containing all the results, namely
+                * `id`: Id of each star.
                 * `M_fit`: Fitted linear magnitude.
                 * `b_fit`: Fitted background level.
                 * `x_fit`: Fitted x-position.
                 * `y_fit`: Fitted y-position.
-                * `v_mag`: Expected (logarithmic) magnitude.
-                * `x`: Expected x-position.
-                * `y`: Expected y-position.
                 * `visibility`: Calculated visibility factor.
         """
         super(StarDetectionLLH, self).detect(image)
@@ -274,6 +232,22 @@ class StarDetectionLLH(StarDetectionBase):
 
 
 class StarDetectionFilter(StarDetectionBase):
+    """Likelihood approach to star detection. Fits every star individually
+    using a simple model.
+    
+    Attributes
+    ----------
+    name : str
+        Name of the method
+    sigma : float
+        Sigma parameter of the model used for the LoG-filter
+    size : tuple(int)
+        Size of the cropped out parts of the image.
+    verbose : bool
+        Verbosity flag.
+    quantile : float
+        Quantile to use for calculating the M-value.
+    """
     name = 'filter_star_detection'
 
     def __init__(self, camera, sigma=1.0, fit_size=5, quantile=100.0,
@@ -285,9 +259,24 @@ class StarDetectionFilter(StarDetectionBase):
         self.verbose = verbose
     
     def detect(self, image):
+        """Detect method.
+        
+        Parameters
+        ----------
+        image : quocca.image.Image
+            Image.
+        
+        Returns
+        -------
+        pandas.DataFrame
+            DataFrame containing all the results, namely
+                * `id`: Id of each star.
+                * `M_fit`: Fitted linear magnitude.
+                * `visibility`: Calculated visibility factor.
+        """
         super(StarDetectionFilter, self).detect(image)
         from matplotlib import pyplot as plt
-        img = laplacian_gaussian_filter(image.image, self.sigma)
+        img = gaussian_laplace(image.image, self.sigma)
 
         tx = np.arange(img.shape[0])
         ty = np.arange(img.shape[1])
