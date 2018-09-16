@@ -18,9 +18,11 @@ cam = Camera('cta')
 img = cam.read('path/to/test.mat')
 img.add_catalog('hipparcos', max_mag=5.5, min_dist=12.0)
 results = img.detect('llh', sigma=1.7, fit_size=8)
+results = results.merge(img.stars, on='id', left_index=True)
 ``` 
 
 `results` is then a pandas DataFrame containing the results of the detection in the attribute `visibility`.
+Additional information from the star catalog can be added in addition.
 
 ### Calibrating Camera Parameters
 
@@ -34,7 +36,10 @@ Methods for calibration are found in `quocca.utilities`.
 from quocca.utilities import fit_camera_params
 
 cam = Camera('cta')
-fit_camera_params('2015_11_04-00_01_31.mat', cam, update=True)
+fit_camera_params('2015_11_04-00_01_31.mat', 
+	cam, catalog='hipparcos',
+	max_mag=4, min_alt=30, max_var=5,
+	update=True)
 ```
 This fits camera parameters (e.g. position of the zenith in the image, or an azimut offset) to a clear sky image and updates the configs automatically.
 
@@ -43,7 +48,11 @@ from quocca.utilities import calibrate_method
 
 
 cam = Camera('cta')
-det = StarDetectionLLH(cam, sigma=1.7, fit_size=8)
-calibrate_method('2015_11_04-00_01_31.mat', cam, det, update=True)
+calibrate_method('2015_11_04-00_01_31.mat', 
+                 cam, method='llh', 
+                 kwargs_catalog={'catalog':'hipparcos', 'max_mag': 6, 'min_dist': 12.0},
+                 kwargs_method={'sigma':1.6, 'fit_size': 3, 
+                                'presmoothing': False, 'remove_detected_stars': True},
+                 update=True)
 ```
 This calibrates the estimated visibility of the method `StarDetectionLLH`. The configs are updated automatically.
