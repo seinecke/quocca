@@ -8,10 +8,12 @@ import numpy as np
 import pandas as pd
 
 from progressbar import progressbar
+from tqdm import tqdm
 
 from scipy.spatial import cKDTree
 from scipy.optimize import minimize
 from scipy.ndimage import convolve
+from scipy.special import expit
 
 from skimage.filters import gaussian
 
@@ -169,13 +171,14 @@ class StarDetectionLLH(StarDetectionBase):
     name = 'llh_star_detection'
 
     def __init__(self, camera, sigma=1.6, fit_size=4, presmoothing=0.0,
-                 remove_detected_stars=True, verbose=True):
+                 remove_detected_stars=True, verbose=True, tol=1e-10):
         super(StarDetectionLLH, self).__init__(camera)
         self.sigma = sigma
         self.size = (fit_size, fit_size)
         self.presmoothing = presmoothing
         self.verbose = verbose
         self.remove_detected_stars = remove_detected_stars
+        self.tol = tol
 
     def get_slice(self, pos, shape):
         pos = list(np.round(pos).astype(int))
@@ -188,7 +191,7 @@ class StarDetectionLLH(StarDetectionBase):
     
     def blob_func(self, x, y, x0, y0, mag, sigma, bkg):
         arg = -((x - x0) ** 2 + (y - y0) ** 2) / (2.0 * sigma ** 2)
-        return np.abs(mag) * np.exp(arg) + np.abs(bkg)
+        return np.abs(mag) * np.exp(arg) + np.abs(bkg)# + well
     
     def detect(self, image):
         """Detect method.
@@ -230,7 +233,7 @@ class StarDetectionLLH(StarDetectionBase):
         # Sort by magnitude to process stars ordered by magnitude.
         mag_sort_idx = np.argsort(image.stars.mag.values)
         if self.verbose:
-            iterator = progressbar(mag_sort_idx, total=len(mag_sort_idx))
+            iterator = tqdm(mag_sort_idx, total=len(mag_sort_idx))
         else:
             iterator = mag_sort_idx
         for idx in iterator:
@@ -240,11 +243,20 @@ class StarDetectionLLH(StarDetectionBase):
                     self.blob_func(mx[sel], my[sel], p[2], p[3], p[0],
                                    self.sigma, p[1]) - img[sel]) ** 2
                 )
-            r = minimize(fit_function,
-                         x0=[np.max(img[sel]) - np.mean(img[sel]), 
-                             np.mean(img[sel]),
-                             pos[idx,1], pos[idx,0]],
-                         method='Powell')
+            sel_max = np.max(img[sel])
+            sel_mean = np.mean(img[sel])
+            r = minimize(
+                fit_function,
+                x0=[sel_max - sel_mean, sel_mean, pos[idx,1], pos[idx,0]],
+                method='SLSQP',
+                tol=self.tol,
+                bounds=(
+                    (0.0, sel_max),
+                    (0.0, sel_max),
+                    (pos[idx,1] - self.size[0], pos[idx,1] + self.size[0]),
+                    (pos[idx,0] - self.size[1], pos[idx,0] + self.size[1])
+                )
+            )
             if self.remove_detected_stars:
                 img[sel] -= self.blob_func(mx[sel], my[sel], r.x[2], r.x[3],
                                            r.x[0], self.sigma, 0.0)
