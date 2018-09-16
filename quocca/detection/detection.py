@@ -191,7 +191,7 @@ class StarDetectionLLH(StarDetectionBase):
     
     def blob_func(self, x, y, x0, y0, mag, sigma, bkg):
         arg = -((x - x0) ** 2 + (y - y0) ** 2) / (2.0 * sigma ** 2)
-        return np.abs(mag) * np.exp(arg) + np.abs(bkg)# + well
+        return np.abs(mag) * np.exp(arg) + np.abs(bkg)
     
     def detect(self, image):
         """Detect method.
@@ -213,13 +213,19 @@ class StarDetectionLLH(StarDetectionBase):
                 * `visibility`: Calculated visibility factor.
         """
         super(StarDetectionLLH, self).detect(image)
+
+        # Apply presmoothing.
         img = gaussian(image.image, self.presmoothing)
+        
+        # Generate meshgrid for pixel coordinate grid.
         tx = np.arange(img.shape[0])
         ty = np.arange(img.shape[1])
         mx, my = np.meshgrid(ty, tx)
         n_stars = len(image.stars)
         pos = np.column_stack((image.stars.x.values,
                                image.stars.y.values))
+
+        # Prepare keys to write during the detection.
         keys = [
             'id',
             'M_fit',
@@ -243,8 +249,17 @@ class StarDetectionLLH(StarDetectionBase):
                     self.blob_func(mx[sel], my[sel], p[2], p[3], p[0],
                                    self.sigma, p[1]) - img[sel]) ** 2
                 )
+            # Optimization details:
+            # 1. max - mean is a good starting value for M
+            # 2. mean is a good starting value for b
+            # 3. The expectation value of the x and y coordinates in the
+            #    cropped image are good starting values for x0 and y0.
+            # 4. SLSQP is by far the fastest minimzation method for this task
+            #    plus it's more accurate, plus it can even handle bounds.
             sel_max = np.max(img[sel])
+            sel_min = np.min(img[sel])
             sel_mean = np.mean(img[sel])
+            mean, cov = mean_cov(mx[sel], my[sel], (img[sel] - sel_min) ** 2)
             r = minimize(
                 fit_function,
                 x0=[sel_max - sel_mean, sel_mean, pos[idx,1], pos[idx,0]],
@@ -253,8 +268,8 @@ class StarDetectionLLH(StarDetectionBase):
                 bounds=(
                     (0.0, sel_max),
                     (0.0, sel_max),
-                    (pos[idx,1] - self.size[0], pos[idx,1] + self.size[0]),
-                    (pos[idx,0] - self.size[1], pos[idx,0] + self.size[1])
+                    (mean[0] - self.size[0], mean[0] + self.size[0]),
+                    (mean[1] - self.size[1], mean[1] + self.size[1])
                 )
             )
             if self.remove_detected_stars:
