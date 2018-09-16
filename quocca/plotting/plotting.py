@@ -166,7 +166,7 @@ def show_clouds(img, cloudmap, ax=None, **kwargs):
     return ax
 
 
-def add_stars(posx, posy, mag, max_mag=20.0, size=30, color='#7ac143',
+def add_circle(posx, posy, mag, max_mag=20.0, size=30, color='#7ac143',
               ax=None):
     if ax is None:
         fig, ax = plt.subplots(figsize=(12, 12))
