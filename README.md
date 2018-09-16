@@ -1,6 +1,5 @@
-# quocca - QUality Observation of Cloud Coverage using All sky images
-or
-# quocca - QUalitative Observables from Cloud Camera Analysis
+# quocca - QUick Observation of Cloud Coverage using All sky images
+![Teaser](http://www.hoinka.net/quocca_teaser.png)
 
 This module implements tools to analyse night-time all sky images with the goal to estimate the transmissivity of the atmosphere.
 
@@ -37,9 +36,9 @@ from quocca.utilities import fit_camera_params
 
 cam = Camera('cta')
 fit_camera_params('2015_11_04-00_01_31.mat', cam, 
-				  kwargs_catalog={'catalog':'hipparcos', 'max_mag': 6, 
-                  				  'min_dist': 12.0, 'max_var': 2, 
-                  				  'min_alt': 30},
+          kwargs_catalog={'catalog':'hipparcos', 'max_mag': 6, 
+                            'min_dist': 12.0, 'max_var': 2, 
+                            'min_alt': 30},
                   update=True)
 ```
 This fits camera parameters (e.g. position of the zenith in the image, or an azimut offset) to a clear sky image and updates the configs automatically.
@@ -52,8 +51,8 @@ cam = Camera('cta')
 calibrate_method('2015_11_04-00_01_31.mat', 
                  cam, method='llh', 
                  kwargs_catalog={'catalog':'hipparcos', 'max_mag': 6, 
-                     			 'min_dist': 12.0, 'max_var': 2, 
-                     			 'min_alt': 30}, 
+                           'min_dist': 12.0, 'max_var': 2, 
+                           'min_alt': 30}, 
                  kwargs_method={'sigma':1.6, 'fit_size': 4},
                  update=True)
 ```
