@@ -226,7 +226,8 @@ def calibrate_method(img_path, cam, method, time=0,
     img = cam.read(img_path)
     img.add_catalog(**kwargs_catalog)
     result = img.detect(method, **kwargs_method)
-    calibration = 1.0 / np.median(result.M_fit / np.exp(-result.v_mag))
+    result = result.merge(img.stars, on='id', left_index=True)
+    calibration = 1.0 / np.median(result.M_fit / np.exp(-result.mag))
     with open(resource_filename('quocca', 'resources/cameras.yaml')) as file:
         __config__ = yaml.safe_load(file)
         __supported_cameras__ = list(__config__.keys())
