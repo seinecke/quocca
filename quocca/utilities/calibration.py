@@ -108,17 +108,14 @@ def add_camera(name,
     yaml.safe_dump(__config__, open(res_fn, 'w'), default_flow_style=False)
 
 
-def fit_camera_params(img_path,
-                      cam,
-                      max_mag=3.0,
-                      max_var=2,
-                      min_alt=30,
-                      catalog='hipparcos',
+def fit_camera_params(img_path, cam,
+                      kwargs_catalog={'catalog':'hipparcos', 'max_mag': 6, 
+                     'min_dist': 12.0, 'max_var': 2, 'min_alt': 30},
                       x0=None,
                       init_sigma=10.0,
                       stepsize=1.2,
                       update=False,
-                      verbose=True):
+                      verbose=False):
     """Procedure to fit camera parameters using a clear sky image.
 
     Parameters
@@ -150,12 +147,12 @@ def fit_camera_params(img_path,
         raise ValueError('init_sigma needs to be > 0.1.')
 
     img = cam.read(img_path)
-    img.add_catalog(catalog,max_mag, max_var, min_alt)
+    img.add_catalog(**kwargs_catalog)
 
     def fitness(img, ip, r, zx, zy, ao):
-        pos = cam.__calib_project__(img.stars.az.values * u.deg,
-                                    img.stars.alt.values * u.deg,
-                                    ao * u.deg, zx, zy, r)
+        pos = cam.__calib_project__(img.stars.az.values,
+                                    img.stars.alt.values,
+                                    ao, zx, zy, r)
         return -np.sum(ip(np.array(pos)) ** 2)
     
     w, h = cam.resolution['y'], cam.resolution['x']
@@ -199,7 +196,10 @@ def fit_camera_params(img_path,
 
 
 def calibrate_method(img_path, cam, method, time=0,
-                     kwargs_method={}, kwargs_catalog={}, update=True):
+                     kwargs_catalog={'catalog':'hipparcos', 'max_mag': 6, 
+                     'min_dist': 12.0, 'max_var': 2, 'min_alt': 30}, 
+                     kwargs_method={'sigma':1.6, 'fit_size': 4}, 
+                     update=False):
     """Calibrates a method for a camera, i.e. fits the response of the camera
     to a certain star detection method using a very clear night sky image.
 

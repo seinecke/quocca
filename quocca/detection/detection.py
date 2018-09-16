@@ -7,7 +7,7 @@ Detection.
 import numpy as np
 import pandas as pd
 
-from tqdm import tqdm
+from progressbar import progressbar
 
 from scipy.spatial import cKDTree
 from scipy.optimize import minimize
@@ -168,8 +168,8 @@ class StarDetectionLLH(StarDetectionBase):
     """
     name = 'llh_star_detection'
 
-    def __init__(self, camera, sigma=1.7, fit_size=8, presmoothing=1.5,
-                 remove_detected_stars=False, verbose=True):
+    def __init__(self, camera, sigma=1.6, fit_size=4, presmoothing=0.0,
+                 remove_detected_stars=True, verbose=True):
         super(StarDetectionLLH, self).__init__(camera)
         self.sigma = sigma
         self.size = (fit_size, fit_size)
@@ -230,7 +230,7 @@ class StarDetectionLLH(StarDetectionBase):
         # Sort by magnitude to process stars ordered by magnitude.
         mag_sort_idx = np.argsort(image.stars.mag.values)
         if self.verbose:
-            iterator = tqdm(mag_sort_idx, total=len(mag_sort_idx))
+            iterator = progressbar(mag_sort_idx, total=len(mag_sort_idx))
         else:
             iterator = mag_sort_idx
         for idx in iterator:
@@ -279,7 +279,7 @@ class StarDetectionFilter(StarDetectionBase):
     """
     name = 'filter_star_detection'
 
-    def __init__(self, camera, sigma=1.0, fit_size=5, quantile=100.0,
+    def __init__(self, camera, sigma=1.0, fit_size=4, quantile=100.0,
                  verbose=True):
         super(StarDetectionFilter, self).__init__(camera)
         self.sigma = sigma
@@ -318,7 +318,7 @@ class StarDetectionFilter(StarDetectionBase):
             key: np.zeros(n_stars)
             for key in ['id', 'M_fit', 'visibility']
         }
-        iterator = tqdm(range(n_stars)) if self.verbose else range(n_stars)
+        iterator = progressbar(range(n_stars)) if self.verbose else range(n_stars)
         for idx in iterator:
             sel = get_slice((pos[idx,1], pos[idx,0]), self.size, img.shape)
             M = np.percentile(img[sel], self.quantile)
