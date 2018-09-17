@@ -64,35 +64,6 @@ def get_slice(pos, size, shape):
             slice(b_min, b_max, None))
 
 
-def mean_cov(mx, my, M):
-    """Calculates mean and covariance of a matrix `M`.
-
-    Parameters
-    ----------
-    mx, my : numpy.array
-        Meshgrid matrices
-    M : numpy.array
-        Matrix
-
-    Returns
-    -------
-    mean : numpy.array
-        Mean vector
-    cov : numpy.array
-        Covariance matrix
-    """
-    norm = np.sum(M)
-    mean_x = np.sum(mx * M) / norm
-    mean_y = np.sum(my * M) / norm
-    mean_xx = np.sum(mx ** 2 * M) / norm
-    mean_yy = np.sum(my ** 2 * M) / norm
-    mean_xy = np.sum(mx * my * M) / norm
-    mean = np.array([mean_x, mean_y])
-    cov = np.array([[mean_xx - mean_x ** 2, mean_xy - mean_x * mean_y],
-                    [mean_xy - mean_x * mean_y, mean_yy - mean_y ** 2]])
-    return mean, cov
-
-
 def get_calibration(cam_name, meth_name, time):
     """Gathers a suitable calibration for a camera and method at a given time.
 
@@ -252,24 +223,24 @@ class StarDetectionLLH(StarDetectionBase):
             # Optimization details:
             # 1. max - mean is a good starting value for M
             # 2. mean is a good starting value for b
-            # 3. The expectation value of the x and y coordinates in the
+            # 3. The true x and y coordinates in the
             #    cropped image are good starting values for x0 and y0.
             # 4. SLSQP is by far the fastest minimzation method for this task
             #    plus it's more accurate, plus it can even handle bounds.
             sel_max = np.max(img[sel])
             sel_min = np.min(img[sel])
             sel_mean = np.mean(img[sel])
-            mean, cov = mean_cov(mx[sel], my[sel], (img[sel] - sel_min) ** 2)
             r = minimize(
                 fit_function,
-                x0=[sel_max - sel_mean, sel_mean, pos[idx,1], pos[idx,0]],
+                x0=[sel_max - sel_mean, sel_mean, #mean[0], mean[1]],
+                pos[idx,1], pos[idx,0]],
                 method='SLSQP',
                 tol=self.tol,
                 bounds=(
                     (0.0, sel_max),
                     (0.0, sel_max),
-                    (mean[0] - self.size[0], mean[0] + self.size[0]),
-                    (mean[1] - self.size[1], mean[1] + self.size[1])
+                    (pos[idx,1]-self.size[1], pos[idx,1]+self.size[1]),
+                    (pos[idx,0]-self.size[0], pos[idx,0]+self.size[0])
                 )
             )
             if self.remove_detected_stars:
