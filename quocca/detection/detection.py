@@ -372,9 +372,10 @@ class StarDetectionFilter(StarDetectionBase):
         super(StarDetectionFilter, self).detect(image)
         img = laplacian_gaussian_filter(image.image, self.sigma)
 
-        tx = np.arange(img.shape[0])
-        ty = np.arange(img.shape[1])
+        tx = np.arange(img.shape[1])
+        ty = np.arange(img.shape[0])
         mx, my = np.meshgrid(tx, ty)
+        print(img.shape, mx.shape, my.shape)
 
         n_stars = len(image.stars)
         pos = np.column_stack((image.stars.x.values,

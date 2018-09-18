@@ -144,7 +144,7 @@ class Camera:
                                                            self.zenith['y'])
         return s
 
-    def read(self, filename):
+    def read(self, filename, key='pic1'):
         """Reads an image corresponding to camera defined in the object.
 
         Parameters
@@ -157,7 +157,7 @@ class Camera:
         img : quocca.image.Image object
             Image.
         """
-        return Image(filename, self)
+        return Image(filename, self, key=key)
 
     
     def theta2r(self, theta):

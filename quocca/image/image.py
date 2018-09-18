@@ -83,7 +83,7 @@ class Image:
     """
     __supported_formats__ = ['mat', 'gz', 'fits']
 
-    def __init__(self, path, camera):
+    def __init__(self, path, camera, key='pic1'):
         """Constructor of Image.
         
         Parameters
@@ -109,7 +109,7 @@ class Image:
 
         if suffix == 'mat':
             matfile = sio.loadmat(path)
-            image = matfile['pic1']
+            image = matfile[key]
             for timestamp in camera.timestamps:
                 try:
                     timestamp = matfile[timestamp]
