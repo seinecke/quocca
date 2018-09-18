@@ -25,6 +25,7 @@ from scipy.ndimage import convolve
 from scipy.special import expit
 
 from skimage.filters import gaussian
+from skimage.feature import blob_log
 
 from ruamel import yaml
 from pkg_resources import resource_filename
@@ -369,7 +370,6 @@ class StarDetectionFilter(StarDetectionBase):
                 * `visibility`: Calculated visibility factor.
         """
         super(StarDetectionFilter, self).detect(image)
-        from matplotlib import pyplot as plt
         img = laplacian_gaussian_filter(image.image, self.sigma)
 
         tx = np.arange(img.shape[0])
@@ -406,3 +406,32 @@ class StarDetectionFilter(StarDetectionBase):
             visibility = M / np.exp(-image.stars.mag.iloc[idx])
             results['visibility'][idx] = visibility * self.calibration
         return pd.DataFrame(results, index=results['id'].astype(int))
+
+
+class StarDetectionBlob(StarDetectionBase):
+    name = 'blob_star_detection'
+
+    def __init__(self, camera, sigma=1.6, threshold=0.001, radius=10):
+        super(StarDetectionBlob, self).__init__(camera)
+        self.sigma = sigma
+        self.threshold = threshold
+        self.radius = radius
+
+    def detect(self, image):
+        super(StarDetectionBlob, self).detect(image)
+        blobs = blob_log(image.image, min_sigma=self.sigma,
+                         max_sigma=self.sigma, num_sigma=1,
+                         threshold=self.threshold)
+        mask = self.camera.check_mask(blobs[:,0], blobs[:,1])
+        blobs = blobs[mask,:]
+        kdtree = cKDTree(blobs[:,:-1])
+        star_pos = np.column_stack((image.stars.x, image.stars.y))
+        matches = kdtree.query_ball_point(star_pos, self.radius)
+        visibility = np.array([len(m) > 0 for m in matches])
+        star_pos[visibility, :] = np.array([blobs[m[0],:-1]
+                                            for m in matches if len(m) > 0])
+        return pd.DataFrame({'id': image.stars.id,
+                             'visibility': visibility.astype(float),
+                            'x_fit': star_pos[:,0],
+                            'y_fit': star_pos[:,1]},
+                            index=image.stars.id.values)

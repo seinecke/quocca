@@ -27,7 +27,7 @@ from skimage.filters import gaussian
 
 from ..plotting import show_img
 from ..catalog import Catalog
-from ..detection import StarDetectionLLH, StarDetectionFilter
+from ..detection import StarDetectionLLH, StarDetectionFilter, StarDetectionBlob
 
 
 def nearby_stars(x, y, mag, radius):
@@ -204,6 +204,7 @@ class Image:
             The method to use. The following methods are available:
                 * `llh`: Likelihood fit of all found stars.
                 * `filter`: LoG filter
+                * `blob`: Blob search
 
         kwargs : keywords
             Initialisation keywords.
@@ -220,6 +221,8 @@ class Image:
                 det = StarDetectionLLH(self.camera, **kwargs)
             elif method == 'filter':
                 det = StarDetectionFilter(self.camera, **kwargs)
+            elif method == 'blob':
+                det = StarDetectionBlob(self.camera, **kwargs)
             else:
                 raise ValueError('Unsupported method {}'.format(method))
         results = det.detect(self)
