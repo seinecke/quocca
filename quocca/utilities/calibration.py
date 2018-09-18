@@ -1,8 +1,10 @@
-"""quocca: All Sky Camera Analysis Tools
-
-Calibration.
-
-2018"""
+# quocca: QUick Observation of Cloud Coverage using All sky images
+#  
+# Utilities for calibration, adding cameras, fitting camera parameters.
+#  
+# Authors: S. Einecke <sabrina.einecke@adelaide.edu.au>
+#          T. Hoinka <tobias.hoinka@icecube.wisc.edu>
+#          H. Nawrath <helena.nawrath@tu-dortmund.de>
 import numpy as np
 
 from scipy.optimize import minimize
@@ -20,16 +22,6 @@ from skimage.filters import gaussian
 from ruamel import yaml
 
 from pkg_resources import resource_filename
-
-
-def project_stars(altaz, radius, zx, zy, ao):
-    phi, theta = altaz.az, altaz.alt
-    theta = Angle('90d') - theta
-    r = np.sqrt(2.0) * radius * np.sin(theta.to(u.rad) / 2.0)
-    ao = ao * u.deg
-    row = -r * np.sin(phi + ao) + zx
-    col = r * np.cos(phi + ao) + zy
-    return row, col
 
 
 def update_camera(name, **kwargs):

@@ -1,8 +1,11 @@
-"""quocca: All Sky Camera Analysis Tools
-
-Images.
-
-2018"""
+# quocca: QUick Observation of Cloud Coverage using All sky images
+#  
+# Sky Cam Image class. This class contains an actual sky cam image with all
+# necessary attributes to perform an analysis.
+#  
+# Authors: S. Einecke <sabrina.einecke@adelaide.edu.au>
+#          T. Hoinka <tobias.hoinka@icecube.wisc.edu>
+#          H. Nawrath <helena.nawrath@tu-dortmund.de>
 
 import numpy as np
 import pandas as pd

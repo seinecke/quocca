@@ -16,7 +16,7 @@ def process(input, radius, camera):
     cam = Camera(camera)
     img = cam.read(input)
     img.add_catalog(max_mag=7.0, min_dist=7, min_alt=0, max_var=1.5)
-    result_llh = img.detect('llh', sigma=1.6, fit_size=5, tol=1e-12,
+    result_llh = img.detect('llh', sigma=1.6, fit_size=5, tol=1e-15,
                             remove_detected_stars=True, presmoothing=0.5)
     cmap = cloud_map(result_llh.x_fit,
                      result_llh.y_fit,

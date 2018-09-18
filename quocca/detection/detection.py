@@ -1,8 +1,17 @@
-"""quocca: All Sky Camera Analysis Tools
-
-Detection.
-
-2018"""
+# quocca: QUick Observation of Cloud Coverage using All sky images
+#  
+# Star Detection classes and methods. So far two detection methods are
+# implemented:
+#  
+# 1. StarDetectionLLH [T. Hoinka]
+#    Fits a star model to every expected star position in the image.
+# 2. StarDetectionFilter [J. Adam]
+#    Filters the image using a LoG Filter and then checks the brightness at
+#    the position of expected stars.
+#  
+# Authors: S. Einecke <sabrina.einecke@adelaide.edu.au>
+#          T. Hoinka <tobias.hoinka@icecube.wisc.edu>
+#          H. Nawrath <helena.nawrath@tu-dortmund.de>
 
 import numpy as np
 import pandas as pd
@@ -21,6 +30,131 @@ from ruamel import yaml
 from pkg_resources import resource_filename
 import warnings
 from astropy.time import Time
+
+
+def laplacian_gaussian_filter(img, sigma, prec=1e-16):
+     """Laplacian of the Gaussian filter using analytical description.
+     Note: scipy.ndimage.gaussian_laplacian is similar, but works way worse.
+
+     Parameters
+     ----------
+     img : numpy.array
+         Image.
+     sigma : float
+         Spread parameter of the filter.
+     prec : float, default=1e-16
+         Values of the kernel lower than this value are cut away.
+
+     Returns
+     -------
+     filtered_img : numpy.array
+         Filtered image.
+     """
+     tx = np.arange(img.shape[0]) - img.shape[0] * 0.5
+     ty = np.arange(img.shape[0]) - img.shape[0] * 0.5
+     mx, my = np.meshgrid(tx, ty)
+     r2 = (mx ** 2 + my ** 2) / (2.0 * sigma ** 2)
+     kernel = 1.0 / (np.pi * sigma ** 4) * (1.0 - r2) * np.exp(-r2)
+     kernel /= np.max(kernel)
+     kernelsum = np.max(np.abs(kernel), axis=0)
+     below_prec = np.where(kernelsum > prec)[0]
+     lower = below_prec[0]
+     upper = below_prec[-1]
+     kernel = kernel[lower:upper, lower:upper]
+     return convolve(img, kernel)
+
+
+def crop(pos, size, shape):
+    """Crops out a snippet from an image surrounding a position `pos`.
+
+    Parameters
+    ----------
+    pos : numpy.array, shape=(n,)
+        Position
+    size : tuple
+        Size of the cropped image.
+    shape : tuple
+        Shape of the image.
+
+    Returns
+    -------
+    slice : tuple(slice, slice)
+        Tuple of slices to crop the image.
+    """
+    pos = list(np.round(pos).astype(int))
+    a_min = np.clip(pos[1] - size[1], 0, shape[0] - 1)
+    a_max = np.clip(pos[1] + size[1] + 1, 0, shape[0] - 1)
+    b_min = np.clip(pos[0] - size[0], 0, shape[1] - 1)
+    b_max = np.clip(pos[0] + size[0] + 1, 0, shape[1] - 1)
+    return (slice(a_min, a_max, None),
+            slice(b_min, b_max, None))
+
+
+def get_calibration(cam_name, meth_name, time):
+    """Gathers a suitable calibration for a camera and method at a given time.
+
+    Parameters
+    ----------
+    cam_name : str
+        Camera name
+    meth_name : str
+        Method name
+    time : astropy.time.Time object
+        Time
+
+    Returns
+    -------
+    calibration : float
+        Calibration
+    """
+    with open(resource_filename('quocca', 'resources/cameras.yaml')) as file:
+        config = yaml.safe_load(file)
+        try:
+            calibration = config[cam_name][meth_name]
+            calib_keys = list(calibration.keys())
+            times = {c: Time(c) for c in calib_keys}
+            available = False
+            chosen_key = None
+            for c, t in times.items():
+                if time > t:
+                    if chosen_key is None:
+                        chosen_key = c
+                    elif time - t < time - times[chosen_key]:
+                        chosen_key = c
+            try:
+                return calibration[chosen_key]
+            except:
+                warnings.warn('No calibration setting found.')
+                return 1.0
+
+        except KeyError:
+            warnings.warn('No calibration setting found.')
+            return 1.0
+
+
+def blob_func(x, y, x0, y0, mag, sigma, bkg):
+    """Model function for the star.
+
+    Parameters
+    ----------
+    x, y : numpy.array
+        Coordinates for evaluation
+    x0, y0 : float
+        Location of the star.
+    mag : float
+        Magnitude of the star.
+    sigma : float
+        Spread of the star.
+    bkg : float
+        Background level.
+
+    Returns
+    -------
+    model : np.array
+        Model.
+    """
+    arg = -((x - x0) ** 2 + (y - y0) ** 2) / (2.0 * sigma ** 2)
+    return np.abs(mag) * np.exp(arg) + np.abs(bkg)
 
 
 def laplacian_gaussian_filter(img, sigma, prec=1e-16):
@@ -160,10 +294,6 @@ class StarDetectionLLH(StarDetectionBase):
         return (slice(a_min, a_max, None),
                 slice(b_min, b_max, None))
     
-    def blob_func(self, x, y, x0, y0, mag, sigma, bkg):
-        arg = -((x - x0) ** 2 + (y - y0) ** 2) / (2.0 * sigma ** 2)
-        return np.abs(mag) * np.exp(arg) + np.abs(bkg)
-    
     def detect(self, image):
         """Detect method.
         
@@ -217,8 +347,8 @@ class StarDetectionLLH(StarDetectionBase):
             sel = get_slice((pos[idx,1], pos[idx,0]), self.size, img.shape)
             def fit_function(p):
                 return np.sum((
-                    self.blob_func(mx[sel], my[sel], p[2], p[3], p[0],
-                                   self.sigma, p[1]) - img[sel]) ** 2
+                    blob_func(mx[sel], my[sel], p[2], p[3], p[0],
+                              self.sigma, p[1]) - img[sel]) ** 2
                 )
             # Optimization details:
             # 1. max - mean is a good starting value for M
@@ -244,8 +374,8 @@ class StarDetectionLLH(StarDetectionBase):
                 )
             )
             if self.remove_detected_stars:
-                img[sel] -= self.blob_func(mx[sel], my[sel], r.x[2], r.x[3],
-                                           r.x[0], self.sigma, 0.0)
+                img[sel] -= blob_func(mx[sel], my[sel], r.x[2], r.x[3],
+                                      r.x[0], self.sigma, 0.0)
             visibility = np.abs(r.x[0]) / np.exp(-image.stars.mag.iloc[idx])
             results['id'][idx] = image.stars.id.iloc[idx]
             results['M_fit'][idx] = np.abs(r.x[0])

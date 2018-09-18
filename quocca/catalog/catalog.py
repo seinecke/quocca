@@ -1,8 +1,11 @@
-"""quocca: All Sky Camera Analysis Tools
-
-Catalogs.
-
-2018"""
+# quocca: QUick Observation of Cloud Coverage using All sky images
+#  
+# Defines the Catalog class, which is pretty much just a pandas DataFrame with
+# a few additional tweaks to facilitate handling.  
+#  
+# Authors: S. Einecke <sabrina.einecke@adelaide.edu.au>
+#          T. Hoinka <tobias.hoinka@icecube.wisc.edu>
+#          H. Nawrath <helena.nawrath@tu-dortmund.de>
 
 import numpy as np
 import pandas as pd

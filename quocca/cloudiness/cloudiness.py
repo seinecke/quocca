@@ -1,8 +1,10 @@
-"""quocca: All Sky Camera Analysis Tools
-
-Cloudiness.
-
-2018"""
+# quocca: QUick Observation of Cloud Coverage using All sky images
+#  
+# Cloudiness classes and methods. 
+#  
+# Authors: S. Einecke <sabrina.einecke@adelaide.edu.au>
+#          T. Hoinka <tobias.hoinka@icecube.wisc.edu>
+#          H. Nawrath <helena.nawrath@tu-dortmund.de>
 
 from sklearn.neighbors.regression import KNeighborsRegressor, check_array, _get_weights
 import numpy as np

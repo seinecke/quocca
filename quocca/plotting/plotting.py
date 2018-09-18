@@ -1,8 +1,26 @@
-"""quocca: All Sky cameraera Analysis Tools
-
-Plotting.
-
-2018"""
+# quocca: QUick Observation of Cloud Coverage using All sky images
+#  
+# Contains rudimentary plotting methods that you may not want to implement on
+# your own, such as
+#
+# 1. `show_img`: Plots a neat looking picture of a sky cam image with some
+#     additional guides, such as altitude lines etc.
+# 2. `show_clouds`: Overlays an image of a cloud.
+# 3. `show_circle`: Draws circles into a plot, e.g. to plot stars detected
+#     in an image etc.
+#
+# The basic idea behind using this submodule is that you initialize an Axes
+# object with one of the method and pass it through the other methods, e.g.
+# ```
+# ax = show_img(img)
+# ax = show_clouds(cmap, ax=ax)
+# ax = show_circle(x, y, m, ax=ax)
+# ```
+# etc.
+#
+# Authors: S. Einecke <sabrina.einecke@adelaide.edu.au>
+#          T. Hoinka <tobias.hoinka@icecube.wisc.edu>
+#          H. Nawrath <helena.nawrath@tu-dortmund.de>
 
 import numpy as np
 
