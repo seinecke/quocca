@@ -26,12 +26,12 @@ def process(input, camera, detect, mag, output):
 	img.add_catalog(max_mag=mag, min_dist=12, min_alt=0, max_var=1.5)
 
 	if detect == 'llh':
-		res = img.detect('llh', sigma=1.6, fit_size=4, tol=1e-15,
-    					 remove_detected_stars=True, presmoothing=0.5)
+		res = img.detect('llh')
 	elif detect == 'filter':
-		res = img.detect('filter', sigma=1.0, fit_size=4)
+		res = img.detect('filter')
 	elif detect == 'blob':
 		res = img.detect('blob')
+		res = res[res.visibility==1.0]
 
 	res = res.merge(img.stars, on='id', left_index=True)
 
