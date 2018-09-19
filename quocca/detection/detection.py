@@ -223,7 +223,7 @@ class StarDetectionLLH(StarDetectionBase):
     name = 'llh_star_detection'
 
     def __init__(self, camera, sigma=1.6, fit_size=4, presmoothing=0.0,
-                 remove_detected_stars=True, verbose=True, tol=1e-10):
+                 remove_detected_stars=True, verbose=True, tol=1e-15):
         super(StarDetectionLLH, self).__init__(camera)
         self.sigma = sigma
         self.size = (fit_size, fit_size)
