@@ -24,7 +24,7 @@ res = res.merge(img.stars, on='id', left_index=True)
 Additional information from the star catalog can be added in addition.
 
 
-Based on the results, a cloud map can be produced (e.g. with the method `GaussianRunningAvg`.
+Based on the results, a cloud map can be produced (e.g. with the method `GaussianRunningAvg`) in addition.
 
 ```python
 cmap = cloud_map(res.x_fit, res.y_fit, res.visibility,
