@@ -16,12 +16,28 @@ from quocca.camera import Camera
 cam = Camera('cta')
 img = cam.read('path/to/test.mat')
 img.add_catalog('hipparcos', max_mag=5.5, min_dist=12.0)
-results = img.detect('llh', sigma=1.7, fit_size=8)
-results = results.merge(img.stars, on='id', left_index=True)
+res = img.detect('llh', sigma=1.7, fit_size=8)
+res = res.merge(img.stars, on='id', left_index=True)
 ``` 
 
-`results` is then a pandas DataFrame containing the results of the detection in the attribute `visibility`.
+`res` is then a pandas DataFrame containing the results of the detection in the attribute `visibility`.
 Additional information from the star catalog can be added in addition.
+
+
+Based on the results, a cloud map can be produced (e.g. with the method `GaussianRunningAvg`.
+
+```python
+cmap = cloud_map(res.x_fit, res.y_fit, res.visibility,
+                 extent=(cam.resolution['x'], cam.resolution['y']),
+                 size=(200, 200),
+                 cloudiness_calc=GaussianRunningAvg,
+                 radius=25,
+                 smoothing=3)
+
+fig, ax = plt.subplots(figsize=(8,8))
+ax = show_img(img, ax=ax)
+ax = show_clouds(img, cmap, opaque=True, ax=ax)
+```
 
 ### Calibrating Camera Parameters
 
