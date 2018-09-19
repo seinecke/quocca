@@ -39,9 +39,12 @@ def process(input, camera, detect, mag, output):
 	                       gridspec_kw={'height_ratios':[6,1]})
 
 	ax[0] = img.show(ax=ax[0])
-	ax[0].quiver(res.y, res.x, 
-	           res.y_fit, res.x_fit,
-	         color='#7ac143')
+	q = ax[0].quiver(res.y, res.x,
+					res.y-res.y_fit, 
+					res.x-res.x_fit,
+	         		color='#7ac143')
+	ax[0].quiverkey(q, X=0.8, Y=1.02, U=3,
+             label='Distance = 3 pixels', labelpos='E')
 
 	res['radius'] = np.sqrt( (res.x - res.x_fit)**2 
 		                + (res.y - res.y_fit)**2 )
