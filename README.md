@@ -27,6 +27,9 @@ Additional information from the star catalog can be added in addition.
 Based on the results, a cloud map can be produced (e.g. with the method `GaussianRunningAvg`) in addition.
 
 ```python
+from quocca.cloudiness import GaussianRunningAvg, cloud_map
+from quocca.plotting import show_img, show_clouds
+
 cmap = cloud_map(res.x_fit, res.y_fit, res.visibility,
                  extent=(cam.resolution['x'], cam.resolution['y']),
                  size=(200, 200),
