@@ -411,7 +411,7 @@ class StarDetectionFilter(StarDetectionBase):
 class StarDetectionBlob(StarDetectionBase):
     name = 'blob_star_detection'
 
-    def __init__(self, camera, sigma=1.6, threshold=0.001, radius=10):
+    def __init__(self, camera, sigma=1.6, threshold=0.001, radius=5):
         super(StarDetectionBlob, self).__init__(camera)
         self.sigma = sigma
         self.threshold = threshold
