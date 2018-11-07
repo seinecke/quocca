@@ -10,6 +10,8 @@
 import numpy as np
 import pandas as pd
 
+from imageio import imsave
+
 from astropy import units as u
 from astropy.time import Time
 from astropy.io import fits
@@ -194,6 +196,23 @@ class Image:
         choice = np.all(D > radius, axis=1)
         self.star_pos = self.star_pos[choice, :]
         self.star_mag = self.star_mag[choice]
+
+    def imsave(self, filename, lower=0.0, upper=99.7):
+        """Saves image as image file (tiff, png, ...)
+
+        Parameters
+        ----------
+        filename : str
+            Filename. Suffix needs to be something understood by
+            `imageio.imwrite`
+        lower : float
+            Lower quantile
+        upper : float
+            Upper quantile
+        """
+        vmin = np.percentile(self.image, lower)
+        vmax = np.percentile(self.image, upper)
+        imsave(filename, np.clip(self.image, vmin, vmax))
 
     def detect(self, method='llh', **kwargs):
         """Detects stars in the image.

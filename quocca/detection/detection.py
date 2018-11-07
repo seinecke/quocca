@@ -287,6 +287,7 @@ class StarDetectionLLH(StarDetectionBase):
                 return np.sum((
                     blob_func(mx[sel], my[sel], p[2], p[3], p[0],
                               self.sigma, p[1]) - img[sel]) ** 2
+                    / (img[sel] + 1e-8)
                 )
             # Optimization details:
             # 1. max - mean is a good starting value for M
@@ -400,7 +401,7 @@ class StarDetectionFilter(StarDetectionBase):
 
             results['id'][idx] = image.stars.id.iloc[idx]
             results['M_fit'][idx] = M
-            results['b_fit'][idx] = np.mean(img[sel])
+            results['b_fit'][idx] = np.mean(image.image[sel])
             results['x_fit'][idx] = mean[1]
             results['y_fit'][idx] = mean[0]
             visibility = M / np.exp(-image.stars.mag.iloc[idx])
