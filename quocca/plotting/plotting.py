@@ -191,7 +191,7 @@ def show_circle(posx, posy, mag, max_mag=20.0, size=30, color='#7ac143',
         
     display = mag < max_mag
     ax.scatter(posy[display], posx[display],
-               s=size, marker='o', facecolor='', edgecolor=color)
+               s=size, marker='o', facecolor=[0,0,0,0], edgecolor=color)
 
     return ax
     

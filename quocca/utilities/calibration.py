@@ -19,14 +19,15 @@ from astropy.time import Time
 
 from skimage.filters import gaussian
 
-from ruamel import yaml
+from ruamel.yaml import YAML
 
 from pkg_resources import resource_filename
 
 
 def update_camera(name, **kwargs):
     with open(resource_filename('quocca', 'resources/cameras.yaml')) as file:
-        __config__ = yaml.safe_load(file)
+        yaml = YAML(typ='safe', pure=True)
+        __config__ = yaml.load(file)
         __supported_cameras__ = list(__config__.keys())
     if name not in __supported_cameras__:
         raise NameError('Camera {} does not exist.'
@@ -78,6 +79,7 @@ def add_camera(name,
         Additional parameters
     """
     with open(resource_filename('quocca', 'resources/cameras.yaml')) as file:
+        yaml = YAML(typ='safe', pure=True)
         __config__ = yaml.safe_load(file)
         __supported_catalogs__ = list(__config__.keys())
     if name in __supported_catalogs__ and not force:
@@ -218,10 +220,11 @@ def calibrate_method(img_path, cam, method, time=0,
     img = cam.read(img_path)
     img.add_catalog(**kwargs_catalog)
     result = img.detect(method, **kwargs_method)
-    result = result.merge(img.stars, on='id', left_index=True)
+    result = result.merge(img.stars, on='id')
     calibration = 1.0 / np.median(result.M_fit / np.exp(-result.mag))
     with open(resource_filename('quocca', 'resources/cameras.yaml')) as file:
-        __config__ = yaml.safe_load(file)
+        yaml = YAML(typ='safe', pure=True)
+        __config__ = yaml.load(file)
         __supported_cameras__ = list(__config__.keys())
     if cam.name not in __supported_cameras__:
         raise NameError('Camera {} does not exist.'

@@ -9,7 +9,7 @@
 
 import numpy as np
 import pandas as pd
-from ruamel import yaml
+from ruamel.yaml import YAML
 from pkg_resources import resource_filename
 
 from astropy.table import Table
@@ -33,7 +33,8 @@ class Catalog(pd.DataFrame):
         The magnitude of each star.
     """
     with open(resource_filename('quocca', 'resources/catalogs.yaml')) as file:
-        __config__ = yaml.safe_load(file)
+        yaml = YAML(typ='safe', pure=True)
+        __config__ = yaml.load(file)
         __supported_catalogs__ = list(__config__.keys())
 
     def __init__(self, name):

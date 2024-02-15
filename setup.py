@@ -17,7 +17,8 @@ setup(
         'astropy>=2',
         'progressbar2',
         'pandas',
-        'matplotlib>=2'
+        'matplotlib>=2',
+        'tqdm'
     ],
     package_data={'quocca': ['resources/hipparcos.fits.gz',
                              'resources/catalogs.yaml',

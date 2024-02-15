@@ -27,7 +27,7 @@ from scipy.special import expit
 from skimage.filters import gaussian
 from skimage.feature import blob_log
 
-from ruamel import yaml
+from ruamel.yaml import YAML
 from pkg_resources import resource_filename
 import warnings
 from astropy.time import Time
@@ -109,7 +109,8 @@ def get_calibration(cam_name, meth_name, time):
         Calibration
     """
     with open(resource_filename('quocca', 'resources/cameras.yaml')) as file:
-        config = yaml.safe_load(file)
+        yaml = YAML(typ='safe', pure=True)
+        config = yaml.load(file)
         try:
             calibration = config[cam_name][meth_name]
             calib_keys = list(calibration.keys())

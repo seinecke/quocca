@@ -11,7 +11,7 @@ cta:
     lat: 28.7618172
     lon: -17.8913442
   mapping: nonlin
-  mask: resources/cta_mask.png
+  #mask: resources/cta_mask.png
   max_val: 65536
   radius: 847.5192467361333
   resolution:
@@ -51,3 +51,30 @@ iceact:
   zenith:
     x: 326.5390254890759
     y: 249.69522492175076
+adl:
+  az_offset: 87.2993699936737
+  filter_star_detection:
+    '1970-01-01T00:00:01.000': 0.4959679878164394
+    '2015-12-19T00:00:01.000': 0.09033273267322699
+  llh_star_detection:
+    '1970-01-01T00:00:01.000': 1.4867742767618106
+    '2015-12-19T00:00:01.000': 0.4729175929680222
+  location:
+    height: 0.0
+    lat: -34.918889
+    lon: 138.602222
+  mapping: nonlin
+  mask: resources/adl_mask.png
+  max_val: 32767
+  radius: 1200
+  resolution:
+    x: 3008
+    y: 3008
+  size:
+    x: 1000
+    y: 1000
+  timestamps:
+  - DATE-OBS
+  zenith:
+    x: 1500
+    y: 1500

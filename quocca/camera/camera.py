@@ -9,7 +9,7 @@
 
 import numpy as np
 
-from ruamel import yaml
+from ruamel.yaml import YAML
 from pkg_resources import resource_filename
 from imageio import imread
 from scipy.interpolate import RegularGridInterpolator
@@ -65,7 +65,8 @@ class Camera:
 
     # Loading config and listing supported camera types.
     with open(resource_filename('quocca', 'resources/cameras.yaml')) as file:
-        __config__ = yaml.safe_load(file)
+        yaml = YAML(typ='safe', pure=True)
+        __config__ = yaml.load(file)
         __supported_cameras__ = list(__config__.keys())
     
     # List of attributes required for a Camera to be viable.
