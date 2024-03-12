@@ -30,6 +30,7 @@ def r2theta_nonlin(r, radius):
 
 def theta2r_lin(theta, radius):
     return 2.0 * np.deg2rad(theta) * radius / np.pi
+    #return np.deg2rad(theta) * radius
 
 
 def theta2r_nonlin(theta, radius):
@@ -103,7 +104,7 @@ class Camera:
             self.location = EarthLocation(**self.location)
             try:
                 mask_path = resource_filename('quocca', self.mask)
-                mask = np.array(imread(mask_path)) != 0
+                mask = np.array(imread(mask_path))[:,:,0] != 0
             except:
                 mask = np.ones((self.resolution['y'], self.resolution['x']))
             tx = np.arange(mask.shape[0])
