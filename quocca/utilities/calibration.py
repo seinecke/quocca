@@ -34,7 +34,9 @@ def update_camera(name, **kwargs):
                         .format(name))
     __config__[name].update(kwargs)
     res_fn = resource_filename('quocca', 'resources/cameras.yaml')
-    yaml.safe_dump(__config__, open(res_fn, 'w'), default_flow_style=False)
+    yaml = YAML(typ='safe', pure=True)
+    yaml.default_flow_style = False
+    yaml.dump(__config__, open(res_fn, 'w'))
 
 
 def add_camera(name,
@@ -99,7 +101,9 @@ def add_camera(name,
     }}
     __config__.update(d)
     res_fn = resource_filename('quocca', 'resources/cameras.yaml')
-    yaml.safe_dump(__config__, open(res_fn, 'w'), default_flow_style=False)
+    yaml = YAML(typ='safe', pure=True)
+    yaml.default_flow_style = False
+    yaml.dump(__config__, open(res_fn, 'w'))
 
 
 def fit_camera_params(img_path, cam,
