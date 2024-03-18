@@ -121,6 +121,13 @@ class Image:
                 except KeyError:
                     continue
 
+        #ud -> Up/Down Flip, lr -> Left/right Flip
+        if camera.mirror['lr']:
+            image = np.fliplr(image)
+                
+        if camera.mirror['ud']:
+            image = np.flipud(image) 
+
         image[np.isnan(image)] = 0.0
         self.image = np.clip(image / camera.max_val, 0.0, 1.0)
         self.time = time
