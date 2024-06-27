@@ -193,6 +193,76 @@ def fit_camera_params(img_path, cam,
             'az_offset': x0[3]}
 
 
+def fit_camera_params_llh(img_path, cam,
+                      kwargs_catalog={'catalog':'hipparcos', 'max_mag': 6, 
+                     'min_dist': 12.0, 'max_var': 2, 'min_alt': 30},
+                      kwargs_method={'sigma': 0.6, 'fit_size': 20, 
+                      'presmoothing': 0.0, 'remove_detected_stars': True, 
+                      'fit_aim': 'calib', 'verbose': True, 'tol': 1e-15},
+                      x0=None,
+                      update=False,
+                      verbose=False):
+    """Procedure to fit camera parameters using a clear sky image.
+
+    Parameters
+    ----------
+    img_path : str
+        Path to a clear sky image.
+    cam: quocca.camera.Camera object
+        Camera.
+    max_mag : float
+        Maximum magnitude to be considered during the fit.
+    x0 : numpy.array, shape=(4,)
+        Initial guess for camera parameters. If None is passed (default), then
+        some initial guess is generated from other camera parameters.
+
+    Returns
+    -------
+    fit_results : dict
+        Dictionary containing the results of the fit.
+    """
+
+    img = cam.read(img_path)
+    img.add_catalog(**kwargs_catalog)
+    det = img.detect(method='llh', **kwargs_method)
+
+    def fitness(img, zx, zy, r, ao):
+        pos = cam.__calib_project__(img.stars.az.values,
+                                    img.stars.alt.values,
+                                    ao, zx, zy, r)
+        print(np.sum(np.sqrt(
+              (det.x_fit - pos[:,0])**2 
+            + (det.y_fit - pos[:,1])**2
+            ) / len(img.stars)) )
+        return np.sum(np.sqrt(
+              (det.x_fit - pos[:,0])**2 
+            + (det.y_fit - pos[:,1])**2
+            ) )
+    
+    w, h = cam.resolution['y'], cam.resolution['x']
+    if x0 is None:
+        x0 = np.array([w * 0.5,
+                       h * 0.5,
+                       (w + h) * 0.25,
+                       90.0])
+
+
+    res = minimize(lambda p: fitness(img, *p), x0=x0, method='powell')
+    x0 = res.x
+        
+    if verbose: print("Final result:\n  zenith: ({}, {})\n  radius: {}\n  azimuth offset: {}"
+                      .format(*x0))
+    if update:
+        update_camera(cam.name, **{'zenith': {'x': float(x0[0]),
+                                              'y': float(x0[1])}, 
+                                   'radius': float(x0[2]),
+                                   'az_offset': float(x0[3])})
+    return {'zenith': {'x': x0[0],
+                       'y': x0[1]}, 
+            'radius': x0[2],
+            'az_offset': x0[3]}
+
+
 def calibrate_method(img_path, cam, method, time=0,
                      kwargs_catalog={'catalog':'hipparcos', 'max_mag': 6, 
                      'min_dist': 12.0, 'max_var': 2, 'min_alt': 30}, 
