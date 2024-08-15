@@ -29,8 +29,9 @@ from skimage.filters import gaussian
 
 from ..plotting import show_img
 from ..catalog import Catalog
-from ..detection import StarDetectionLLH, StarDetectionFilter, StarDetectionBlob
+from ..detection import StarDetectionLLH, StarDetectionLLH2, StarDetectionFilter, StarDetectionBlob
 
+from PIL import Image as pngimage
 
 def nearby_stars(x, y, mag, radius):
     """Masks all stars that have a brigther star closer
@@ -83,7 +84,7 @@ class Image:
     -----
     Currently only `mat`, `fits.gz` and `fits` files are supported.
     """
-    __supported_formats__ = ['mat', 'gz', 'fits']
+    __supported_formats__ = ['mat', 'gz', 'fits', 'png']
 
     def __init__(self, path, camera, key='pic1'):
         """Constructor of Image.
@@ -118,6 +119,18 @@ class Image:
                     date, time = timestamp[0].split(' ')
                     date = date.replace('/', '-')
                     time = Time(date + str('T') + time, scale='utc')
+                except KeyError:
+                    continue
+
+        if suffix == 'png':
+            im = pngimage.open(path)
+            image = np.array(im)
+            for timestamp in camera.timestamps:
+                try:
+                    timestamp = im.text['Timestamp']
+                    # time = Time(timestamp, format='iso', scale='utc')
+                    from datetime import timedelta
+                    time = Time(timestamp, format='iso', scale='utc') - timedelta(hours=9, minutes=30)
                 except KeyError:
                     continue
 
